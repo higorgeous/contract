@@ -1,5 +1,12 @@
+
 image:
   file: .gitpod.Dockerfile
 
 tasks:
   - init: yarn install
+vscode:
+  extensions:
+    - juanblanco.solidity
+    - dracula-theme.theme-dracula
+    - mrmlnc.vscode-duplicate
+    - pkief.material-icon-theme
