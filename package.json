@@ -6,9 +6,5 @@
   "repository": "https://github.com/hi-gorgeous/contract.git",
   "author": "Gorgeous Admin <admin@higorgeous.io>",
   "license": "MIT",
-  "private": false,
-  "devDependencies": {
-    "prettier": "^2.3.1",
-    "prettier-plugin-solidity": "^1.0.0-beta.13"
-  }
+  "private": false
 }

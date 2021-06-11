@@ -51,13 +51,9 @@ contract GorgeousToken is Context, IBEP20, Ownable {
     uint256 private _start_timestamp = block.timestamp;
 
     // Tax Fees as standard
-    uint256 public _taxFee = 5;
-    uint256 public _charityFee = 5;
-    uint256 public _projectFee = 5;
+    uint256 public _taxFee = 15; // Include Charity and Project wallet tax, split later
     uint256 public _liquidityFee = 5;
     uint256 public _previousTaxFee = _taxFee;
-    uint256 public _previousCharityFee = _charityFee;
-    uint256 public _previousProjectFee = _projectFee;
     uint256 public _previousLiquidityFee = _liquidityFee;
 
     uint256 public _maxTaxAmount = 50 * 10**6 * 10**9;
@@ -85,6 +81,9 @@ contract GorgeousToken is Context, IBEP20, Ownable {
         //exclude owner and this contract from fee
         _isExcludedFromFee[owner()] = true;
         _isExcludedFromFee[address(this)] = true;
+        _isExcludedFromFee[_charityAddress] = true;
+        _isExcludedFromFee[_projectAddress] = true;
+
 
         // Create a uniswap pair for this new token
         IPancakeRouter02 _pancakeswapV2Router = IPancakeRouter02(
@@ -206,7 +205,7 @@ contract GorgeousToken is Context, IBEP20, Ownable {
 
     function reflect(uint256 tAmount) public {
         address sender = _msgSender();
-        (uint256 rAmount, , , , , , , ) = _getValues(tAmount);
+        (uint256 rAmount, , , , , ) = _getValues(tAmount);
         _rOwned[sender] = _rOwned[sender].sub(rAmount);
         _rTotal = _rTotal.sub(rAmount);
         _tFeeTotal = _tFeeTotal.add(tAmount);
@@ -219,10 +218,10 @@ contract GorgeousToken is Context, IBEP20, Ownable {
     {
         require(tAmount <= _tTotal, "Amount must be less than supply");
         if (!deductTransferFee) {
-            (uint256 rAmount, , , , , , , ) = _getValues(tAmount);
+            (uint256 rAmount, , , , , ) = _getValues(tAmount);
             return rAmount;
         } else {
-            (, uint256 rTransferAmount, , , , , , ) = _getValues(tAmount);
+            (, uint256 rTransferAmount, , , , ) = _getValues(tAmount);
             return rTransferAmount;
         }
     }
@@ -255,25 +254,17 @@ contract GorgeousToken is Context, IBEP20, Ownable {
     function removeAllFee() private {
         if (
             _taxFee == 0 &&
-            _charityFee == 0 &&
-            _projectFee == 0 &&
             _liquidityFee == 0
         ) return;
         _previousTaxFee = _taxFee;
-        _previousCharityFee = _charityFee;
-        _previousProjectFee = _projectFee;
         _previousLiquidityFee = _liquidityFee;
 
         _taxFee = 0;
-        _charityFee = 0;
-        _projectFee = 0;
         _liquidityFee = 0;
     }
 
     function restoreAllFee() private {
         _taxFee = _previousTaxFee;
-        _charityFee = _previousCharityFee;
-        _projectFee = _previousProjectFee;
         _liquidityFee = _previousLiquidityFee;
     }
 
@@ -348,22 +339,20 @@ contract GorgeousToken is Context, IBEP20, Ownable {
             uint256 rFee,
             uint256 tTransferAmount,
             uint256 tFee,
-            uint256 tCharity,
-            uint256 tProject,
             uint256 tLiquidity
         ) = _getValues(tAmount);
         _rOwned[sender] = _rOwned[sender].sub(rAmount);
         _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);
-        _takeCharity(tCharity);
-        _takeProject(tProject);
+        _takeCharity(tFee);
+        _takeProject(tFee);
         _takeLiquidity(tLiquidity);
         _reflectFee(rFee, tFee);
         emit Transfer(sender, recipient, tTransferAmount);
     }
 
     function _reflectFee(uint256 rFee, uint256 tFee) private {
-        _rTotal = _rTotal.sub(rFee);
-        _tFeeTotal = _tFeeTotal.add(tFee);
+        _rTotal = _rTotal.sub(rFee).div(3);
+        _tFeeTotal = _tFeeTotal.add(tFee).div(3);
     }
 
     function _getValues(uint256 tAmount)
@@ -375,23 +364,17 @@ contract GorgeousToken is Context, IBEP20, Ownable {
             uint256,
             uint256,
             uint256,
-            uint256,
-            uint256,
             uint256
         )
     {
         (
             uint256 tTransferAmount,
             uint256 tFee,
-            uint256 tCharity,
-            uint256 tProject,
             uint256 tLiquidity
         ) = _getTValues(tAmount);
         (uint256 rAmount, uint256 rTransferAmount, uint256 rFee) = _getRValues(
             tAmount,
             tFee,
-            tCharity,
-            tProject,
             tLiquidity,
             _getRate()
         );
@@ -401,8 +384,6 @@ contract GorgeousToken is Context, IBEP20, Ownable {
             rFee,
             tTransferAmount,
             tFee,
-            tCharity,
-            tProject,
             tLiquidity
         );
     }
@@ -426,27 +407,21 @@ contract GorgeousToken is Context, IBEP20, Ownable {
         returns (
             uint256,
             uint256,
-            uint256,
-            uint256,
             uint256
         )
     {
         uint256 multiplier = _getAntiDumpMultiplier();
         uint256 tFee = tAmount.div(10**2).mul(_taxFee).mul(multiplier);
-        uint256 tCharity = tAmount.div(10**2).mul(_charityFee).mul(multiplier);
-        uint256 tProject = tAmount.div(10**2).mul(_projectFee).mul(multiplier);
         uint256 tLiquidity = tAmount.div(10**2).mul(_liquidityFee).mul(
             multiplier
         );
         uint256 tTransferAmount = tAmount.sub(tFee).sub(tLiquidity);
-        return (tTransferAmount, tFee, tCharity, tProject, tLiquidity);
+        return (tTransferAmount, tFee, tLiquidity);
     }
 
     function _getRValues(
         uint256 tAmount,
         uint256 tFee,
-        uint256 tCharity,
-        uint256 tProject,
         uint256 tLiquidity,
         uint256 currentRate
     )
@@ -460,13 +435,9 @@ contract GorgeousToken is Context, IBEP20, Ownable {
     {
         uint256 rAmount = tAmount.mul(currentRate);
         uint256 rFee = tFee.mul(currentRate);
-        uint256 rCharity = tCharity.mul(currentRate);
-        uint256 rProject = tProject.mul(currentRate);
         uint256 rLiquidity = tLiquidity.mul(currentRate);
         uint256 rTransferAmount = rAmount
         .sub(rFee)
-        .sub(rCharity)
-        .sub(rProject)
         .sub(rLiquidity);
         return (rAmount, rTransferAmount, rFee);
     }
@@ -491,20 +462,20 @@ contract GorgeousToken is Context, IBEP20, Ownable {
         return (rSupply, tSupply);
     }
 
-    function _takeCharity(uint256 tCharity) private {
+    function _takeCharity(uint256 tFee) private {
         uint256 currentRate = _getRate();
-        uint256 rCharity = tCharity.mul(currentRate);
+        uint256 rCharity = tFee.mul(currentRate);
         _rOwned[_charityAddress] = _rOwned[_charityAddress].add(rCharity);
         if (_isExcludedFromFee[_charityAddress])
-            _tOwned[_charityAddress] = _tOwned[_charityAddress].add(tCharity);
+            _tOwned[_charityAddress] = _tOwned[_charityAddress].add(tFee).div(3);
     }
 
-    function _takeProject(uint256 tProject) private {
+    function _takeProject(uint256 tFee) private {
         uint256 currentRate = _getRate();
-        uint256 rProject = tProject.mul(currentRate);
+        uint256 rProject = tFee.mul(currentRate);
         _rOwned[_projectAddress] = _rOwned[_projectAddress].add(rProject);
         if (_isExcludedFromFee[_projectAddress])
-            _tOwned[_projectAddress] = _tOwned[_projectAddress].add(tProject);
+            _tOwned[_projectAddress] = _tOwned[_projectAddress].add(tFee).div(3);
     }
 
     function _takeLiquidity(uint256 tLiquidity) private {
