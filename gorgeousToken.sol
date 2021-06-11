@@ -101,9 +101,10 @@ contract Gorgeous is Context, IERC20, Ownable {
         //     0x10ED43C718714eb63d5aA57B78B54704E256024E
         // );
 
-        // Testnet
+        // Test router - https://bsc.kiemtienonline360.com/
+        // Test swap - https://pancake.kiemtienonline360.com/#/swap
         IPancakeRouter02 _pancakeswapV2Router =
-            IPancakeRouter02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);
+            IPancakeRouter02(0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3);
         
         // Create a pancakeswap pair for this new token
         pcsV2Pair = IPancakeFactory(_pancakeswapV2Router.factory()).createPair(
@@ -409,17 +410,21 @@ contract Gorgeous is Context, IERC20, Ownable {
         require(amount > 0, "Transfer amount must be greater than zero");
         
         // Max 2% buy
-        require(
-            amount <= _maxBuyAmount,
-            "Transfer amount exceeds the buy amount (2,000,000)."
-        );
+        if(from != owner() && to != owner())
+            require(
+                amount <= _maxBuyAmount,
+                "Transfer amount exceeds the buy amount (2,000,000)."
+            );
 
         // Max 5% wallet
         uint256 contractBalanceRecepient = balanceOf(to);
-        require(
-                contractBalanceRecepient + amount <= _maxWalletToken,
-                "Exceeds maximum wallet token amount (5,000,000)"
-            );
+        if(from != owner() && to != owner())
+            require(
+                    contractBalanceRecepient + amount <= _maxWalletToken,
+                    "Exceeds maximum wallet token amount (5,000,000)"
+                );
+        
+        // Max tax amount
         if(from != owner() && to != owner())
             require(amount <= _maxTxAmount, "Transfer amount exceeds the maxTxAmount.");
 
