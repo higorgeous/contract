@@ -1,0 +1,14 @@
+{
+  "name": "gorgeous-contract",
+  "version": "1.0.0",
+  "description": "Source code for BEP20 token.",
+  "main": "index.js",
+  "repository": "https://github.com/hi-gorgeous/contract.git",
+  "author": "Gorgeous Admin <admin@higorgeous.io>",
+  "license": "MIT",
+  "private": false,
+  "devDependencies": {
+    "prettier": "^2.3.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.13"
+  }
+}

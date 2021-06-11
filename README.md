@@ -1,1 +1,3 @@
-# Gorgeous contract source.
+# Gorgeous token contract.
+
+Source code for $GRGS contract.
