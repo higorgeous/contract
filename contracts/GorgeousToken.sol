@@ -19,7 +19,7 @@
 // Standard burn: 21% burn (1% Burn, 5% Back to the Liquidity Pool, 5% To charity wallet, 5% To operating wallet, 5% Redistributed to Holders)
 // ----------------------------------------------------------------------------
 
-pragma solidity ^0.8.5;
+pragma solidity ^0.8.4;
 
 import "./BaseRedistribution.sol";
 import "./Liquifier.sol";
