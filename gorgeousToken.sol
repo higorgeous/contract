@@ -26,9 +26,8 @@ import "./contracts/Liquifier.sol";
 import "./contracts/Antiwhale.sol";
 
 abstract contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
-    constructor(Env _env) {
+    constructor() {
         initializeLiquiditySwapper(
-            _env,
             maxTransactionAmount,
             numberOfTokensToSwapToLiquidity
         );
@@ -150,13 +149,6 @@ abstract contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
         uint256 amount
     ) internal override {
         _approve(owner, spender, amount);
-    }
-}
-
-contract Gorgeous is GorgeousToken {
-    constructor() GorgeousToken(Env.Testnet) {
-        // pre-approve the initial liquidity supply (to save a bit of time)
-        _approve(owner(), address(_router), ~uint256(0));
     }
 }
 
