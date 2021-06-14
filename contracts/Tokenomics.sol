@@ -106,9 +106,9 @@ abstract contract Tokenomics is Presaleable {
         _addTokenomic(TokenomicType.Redistribution, fee, address(this));
 
         _addTokenomic(TokenomicType.Burn, 10, burnAddress);
-        _addTokenomic(TokenomicType.Liquidity, fee, address(this));
-        _addTokenomic(TokenomicType.ExternalToBNB, fee, charityAddress);
-        _addTokenomic(TokenomicType.External, fee, projectAddress);
+        _addTokenomic(TokenomicType.Liquidity, 50, address(this));
+        _addTokenomic(TokenomicType.ExternalToBNB, 50, charityAddress);
+        _addTokenomic(TokenomicType.ExternalToBNB, 50, projectAddress);
     }
 
     function _getTokenomicsCount() internal view returns (uint256) {
