@@ -8,7 +8,7 @@ import "../interfaces/IERC20.sol";
 import "../interfaces/IERC20Metadata.sol";
 import "../interfaces/IPancakeV2Factory.sol";
 import "../interfaces/IPancakeV2Router.sol";
-import "../library/Address.sol";
+import "../libraries/Address.sol";
 import "../utilities/Ownable.sol";
 
 abstract contract BaseRedistribution is
