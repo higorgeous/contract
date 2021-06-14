@@ -73,8 +73,6 @@ abstract contract Liquifier is Ownable, Manageable {
             !inSwapAndLiquify &&
             (sender != _pair)
         ) {
-            // TODO check if the `(sender != _pair)` is necessary because that basically
-            // stops swap and liquify for all "buy" transactions
             _swapAndLiquify(contractTokenBalance);
         }
     }

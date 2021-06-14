@@ -21,9 +21,9 @@
 
 pragma solidity ^0.8.5;
 
-import "./contracts/BaseRedistribution.sol";
-import "./contracts/Liquifier.sol";
-import "./contracts/Antiwhale.sol";
+import "./BaseRedistribution.sol";
+import "./Liquifier.sol";
+import "./Antiwhale.sol";
 
 // import "https://github.com/higorgeous/contract/blob/master/contracts/BaseRedistribution.sol";
 // import "https://github.com/higorgeous/contract/blob/master/contracts/Liquifier.sol";
@@ -37,7 +37,7 @@ contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
         );
 
         // exclude the pair address from rewards - we don't want to redistribute
-        // tokenomics to these two; redistribution is only for holders, dah!
+        // tokenomics to these two; redistribution is only for holders!
         _exclude(_pair);
         _exclude(burnAddress);
     }
