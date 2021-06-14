@@ -1,6 +1,5 @@
 ### Tests to pass:
-- Tokenomics fees can be added/removed/edited
-- Tokenomics fees are correctly taken from each (qualifying) transaction
+- Tokenomics fees are correctly taken from each (qualifying) transaction, including increased on early sells.
 - The redistribution tokenomics is correctly distributed among holders (which are not excluded from rewards)
 - `swapAndLiquify` works correctly when the threshold balance is reached
 - `maxTransactionAmount` works correctly and *unlimited* accounts are not subject to the limit

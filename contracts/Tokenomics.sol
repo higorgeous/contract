@@ -2,7 +2,9 @@
 
 pragma solidity ^0.8.5;
 
-abstract contract Tokenomics {
+import "./Presaleable.sol";
+
+abstract contract Tokenomics is Presaleable {
     string internal constant NAME = "Gorgeous Token";
     string internal constant SYMBOL = "GORGEOUS";
 

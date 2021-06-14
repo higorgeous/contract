@@ -21,11 +21,15 @@
 
 pragma solidity ^0.8.5;
 
+import "./Antiwhale.sol";
 import "./BaseRedistribution.sol";
 import "./Liquifier.sol";
-import "./Antiwhale.sol";
 
-abstract contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
+// import "https://github.com/higorgeous/contract/blob/master/contracts/Antiwhale.sol";
+// import "https://github.com/higorgeous/contract/blob/master/contracts/BaseRedistribution.sol";
+// import "https://github.com/higorgeous/contract/blob/master/contracts/Liquifier.sol";
+
+abstract contract GorgeousToken is Antiwhale, BaseRedistribution, Liquifier {
     constructor(Env _env){
         initializeLiquiditySwapper(
             _env,

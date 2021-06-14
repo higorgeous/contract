@@ -12,11 +12,11 @@ import "../libraries/Address.sol";
 import "../utilities/Ownable.sol";
 
 abstract contract BaseRedistribution is
+    Presaleable,
+    Tokenomics,
     IERC20,
     IERC20Metadata,
-    Ownable,
-    Presaleable,
-    Tokenomics
+    Ownable
 {
     using Address for address;
 
@@ -428,7 +428,7 @@ abstract contract BaseRedistribution is
             uint256
         )
     {
-        uint256 tTotalTokenomics = tAmount * tokenomicsSum + TOKENOMICS_DIVISOR;
+        uint256 tTotalTokenomics = tAmount * tokenomicsSum / TOKENOMICS_DIVISOR;
         uint256 tTransferAmount = tAmount - tTotalTokenomics;
         uint256 currentRate = _getCurrentRate();
         uint256 rAmount = tAmount * currentRate;
