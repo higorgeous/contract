@@ -4,13 +4,10 @@ pragma solidity ^0.8.5;
 
 import "../interfaces/IPancakeV2Factory.sol";
 import "../interfaces/IPancakeV2Router.sol";
-import "../libraries/Address.sol";
 import "../utilities/Ownable.sol";
 import "../utilities/Manageable.sol";
 
 abstract contract Liquifier is Ownable, Manageable {
-    using Address for address;
-
     uint256 private withdrawableBalance;
 
     enum Env {Testnet, Mainnet}
@@ -58,8 +55,13 @@ abstract contract Liquifier is Ownable, Manageable {
         uint256 liquifyAmount
     ) internal {
         _env = env;
-        if (_env == Env.Mainnet){ _setRouterAddress(_mainnetRouterV2Address); }
-        else /*(_env == Env.Testnet)*/{ _setRouterAddress(_testnetRouterAddress); }
+        if (_env == Env.Mainnet) {
+            _setRouterAddress(_mainnetRouterV2Address);
+        }
+        /*(_env == Env.Testnet)*/
+        else {
+            _setRouterAddress(_testnetRouterAddress);
+        }
 
         maxTransactionAmount = maxTx;
         numberOfTokensToSwapToLiquidity = liquifyAmount;
@@ -90,7 +92,7 @@ abstract contract Liquifier is Ownable, Manageable {
         IPancakeV2Router _newPancakeRouter = IPancakeV2Router(router);
         _pair = IPancakeV2Factory(_newPancakeRouter.factory()).createPair(
             address(this),
-            _newPancakeRouter.WBNB()
+            _newPancakeRouter.WETH()
         );
         _router = _newPancakeRouter;
         emit RouterSet(router);
@@ -123,12 +125,12 @@ abstract contract Liquifier is Ownable, Manageable {
         // Generate the pancakeswap pair path of token -> bnb
         address[] memory path = new address[](2);
         path[0] = address(this);
-        path[1] = _router.WBNB();
+        path[1] = _router.WETH();
 
         _approveDelegate(address(this), address(_router), tokenAmount);
 
         // Make the swap
-        _router.swapExactTokensForBNBSupportingFeeOnTransferTokens(
+        _router.swapExactTokensForETHSupportingFeeOnTransferTokens(
             tokenAmount,
             // The minimum amount of output tokens that must be received for the transaction not to revert.
             // 0 = accept any amount (slippage is inevitable)
@@ -139,13 +141,13 @@ abstract contract Liquifier is Ownable, Manageable {
         );
     }
 
-    function _addLiquidity(uint256 tokenAmount, uint256 bnbAmount) private {
+    function _addLiquidity(uint256 tokenAmount, uint256 ethAmount) private {
         // Approve token transfer to cover all possible scenarios
         _approveDelegate(address(this), address(_router), tokenAmount);
 
         // Add the liquidity
-        (uint256 tokenAmountSent, uint256 bnbAmountSent, uint256 liquidity) =
-            _router.addLiquidityBNB{value: bnbAmount}(
+        (uint256 tokenAmountSent, uint256 ethAmountSent, uint256 liquidity) =
+            _router.addLiquidityETH{value: ethAmount}(
                 address(this),
                 tokenAmount,
                 // Bounds the extent to which the BNB/token price can go up before the transaction reverts.
@@ -167,7 +169,7 @@ abstract contract Liquifier is Ownable, Manageable {
          * and the BNB will be locked in the Safemoon contract forever.
          */
         withdrawableBalance = address(this).balance;
-        emit LiquidityAdded(tokenAmountSent, bnbAmountSent, liquidity);
+        emit LiquidityAdded(tokenAmountSent, ethAmountSent, liquidity);
     }
 
     /**

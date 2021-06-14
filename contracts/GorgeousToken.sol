@@ -24,16 +24,8 @@ pragma solidity ^0.8.5;
 import "./BaseRedistribution.sol";
 import "./Liquifier.sol";
 import "./Antiwhale.sol";
-import "../libraries/Address.sol";
-
-// import "https://github.com/higorgeous/contract/blob/master/contracts/BaseRedistribution.sol";
-// import "https://github.com/higorgeous/contract/blob/master/contracts/Liquifier.sol";
-// import "https://github.com/higorgeous/contract/blob/master/contracts/Antiwhale.sol";
-// import "https://github.com/higorgeous/contract/blob/master/libraries/Address.sol";
 
 abstract contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
-    using Address for address;
-
     constructor(Env _env){
         initializeLiquiditySwapper(
             _env,
@@ -161,23 +153,8 @@ abstract contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
     }
 }
 
-contract Gorgeous is GorgeousToken{
-    using Address for address;
+contract Gorgeous is GorgeousToken {
     constructor() GorgeousToken(Env.Testnet){
         _approve(owner(),address(_router), ~uint256(0));
     }
 }
-
-/**
- * Tests to pass:
- *
- * - Tokenomics fees can be added/removed/edited
- * - Tokenomics fees are correctly taken from each (qualifying) transaction
- * - The redistribution tokenomics is correctly distributed among holders (which are not excluded from rewards)
- * - `swapAndLiquify` works correctly when the threshold balance is reached
- * - `maxTransactionAmount` works correctly and *unlimited* accounts are not subject to the limit
- * - `maxWalletBalance` works correctly and *unlimited* accounts are not subject to the limit
- * - accounts excluded from fees are not subjecto tx fees
- * - accounts excluded from rewards do not share in rewards
- * - BNB collected/stuck in the contract can be withdrawn (see)
- */

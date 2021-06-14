@@ -2,11 +2,7 @@
 
 pragma solidity ^0.8.5;
 
-import "../libraries/Address.sol";
-
 abstract contract Tokenomics {
-    using Address for address;
-
     string internal constant NAME = "Gorgeous Token";
     string internal constant SYMBOL = "GORGEOUS";
 
