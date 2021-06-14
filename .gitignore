@@ -4,8 +4,14 @@
 # dependencies
 /node_modules
 
+# keys
+.secret
+
 # misc
 .DS_Store
+
+# truffle
+/build
 
 # yarn
 yarn.lock

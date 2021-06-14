@@ -83,11 +83,7 @@ abstract contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
                 _redistribute(amount, currentRate, value, index);
             } else if (name == TokenomicType.Burn) {
                 _burn(amount, currentRate, value, index);
-            } else if (name == TokenomicType.Antiwhale) {
-                // TODO
-            } else if (
-                name == TokenomicType.ExternalToBNB
-            ) {
+            } else if (name == TokenomicType.ExternalToBNB) {
                 _takeTokenomicsToBNB(
                     amount,
                     currentRate,
@@ -154,6 +150,13 @@ abstract contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
         uint256 amount
     ) internal override {
         _approve(owner, spender, amount);
+    }
+}
+
+contract Gorgeous is GorgeousToken {
+    constructor() GorgeousToken(Env.Testnet) {
+        // pre-approve the initial liquidity supply (to save a bit of time)
+        _approve(owner(), address(_router), ~uint256(0));
     }
 }
 

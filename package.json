@@ -6,5 +6,8 @@
   "repository": "https://github.com/hi-gorgeous/contract.git",
   "author": "Gorgeous Admin <admin@higorgeous.io>",
   "license": "MIT",
-  "private": false
+  "private": false,
+  "dependencies": {
+    "@truffle/hdwallet-provider": "^1.4.0"
+  }
 }
