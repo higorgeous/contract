@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.5;
 
 import "../interfaces/IPancakeV2Factory.sol";
 import "../interfaces/IPancakeV2Router.sol";
@@ -89,7 +89,7 @@ abstract contract Liquifier is Ownable, Manageable {
         IPancakeV2Router _newPancakeRouter = IPancakeV2Router(router);
         _pair = IPancakeV2Factory(_newPancakeRouter.factory()).createPair(
             address(this),
-            _newPancakeRouter.BNB()
+            _newPancakeRouter.WETH()
         );
         _router = _newPancakeRouter;
         emit RouterSet(router);
@@ -122,12 +122,12 @@ abstract contract Liquifier is Ownable, Manageable {
         // Generate the pancakeswap pair path of token -> bnb
         address[] memory path = new address[](2);
         path[0] = address(this);
-        path[1] = _router.BNB();
+        path[1] = _router.WETH();
 
         _approveDelegate(address(this), address(_router), tokenAmount);
 
         // Make the swap
-        _router.swapExactTokensForBNBSupportingFeeOnTransferTokens(
+        _router.swapExactTokensForETHSupportingFeeOnTransferTokens(
             tokenAmount,
             // The minimum amount of output tokens that must be received for the transaction not to revert.
             // 0 = accept any amount (slippage is inevitable)
@@ -144,7 +144,7 @@ abstract contract Liquifier is Ownable, Manageable {
 
         // Add the liquidity
         (uint256 tokenAmountSent, uint256 ethAmountSent, uint256 liquidity) =
-            _router.addLiquidityBNB{value: ethAmount}(
+            _router.addLiquidityETH{value: ethAmount}(
                 address(this),
                 tokenAmount,
                 // Bounds the extent to which the BNB/token price can go up before the transaction reverts.
