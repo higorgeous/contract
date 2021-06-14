@@ -4,10 +4,13 @@ pragma solidity ^0.8.5;
 
 import "../interfaces/IPancakeV2Factory.sol";
 import "../interfaces/IPancakeV2Router.sol";
+import "../libraries/Address.sol";
 import "../utilities/Ownable.sol";
 import "../utilities/Manageable.sol";
 
 abstract contract Liquifier is Ownable, Manageable {
+    using Address for address;
+
     uint256 private withdrawableBalance;
 
     enum Env {Testnet, Mainnet}

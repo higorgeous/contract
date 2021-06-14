@@ -24,12 +24,16 @@ pragma solidity ^0.8.5;
 import "./BaseRedistribution.sol";
 import "./Liquifier.sol";
 import "./Antiwhale.sol";
+import "../libraries/Address.sol";
 
 // import "https://github.com/higorgeous/contract/blob/master/contracts/BaseRedistribution.sol";
 // import "https://github.com/higorgeous/contract/blob/master/contracts/Liquifier.sol";
 // import "https://github.com/higorgeous/contract/blob/master/contracts/Antiwhale.sol";
+// import "https://github.com/higorgeous/contract/blob/master/libraries/Address.sol";
 
 abstract contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
+    using Address for address;
+
     constructor(Env _env){
         initializeLiquiditySwapper(
             _env,
@@ -158,7 +162,7 @@ abstract contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
 }
 
 contract Gorgeous is GorgeousToken{
-
+    using Address for address;
     constructor() GorgeousToken(Env.Testnet){
         _approve(owner(),address(_router), ~uint256(0));
     }

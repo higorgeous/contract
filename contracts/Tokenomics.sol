@@ -2,15 +2,20 @@
 
 pragma solidity ^0.8.5;
 
+import "../libraries/Address.sol";
+
 abstract contract Tokenomics {
+    using Address for address;
+
     string internal constant NAME = "Gorgeous Token";
     string internal constant SYMBOL = "GORGEOUS";
 
     uint16 internal constant TOKENOMICS_DIVISOR = 10**3;
     uint8 internal constant DECIMALS = 9;
+    uint256 internal constant ZEROES = 10**DECIMALS;
 
     uint256 private constant MAX = ~uint256(0);
-    uint256 internal constant TOTAL_SUPPLY = 100 * 10**6 * 10**9;
+    uint256 internal constant TOTAL_SUPPLY = 100 * 10**6 * ZEROES;
     uint256 internal _reflectedSupply = (MAX - (MAX % TOTAL_SUPPLY));
 
     /**
@@ -48,7 +53,7 @@ abstract contract Tokenomics {
     address internal burnAddress = 0x000000000000000000000000000000000000dEaD;
 
     /**
-     * Last received
+     * Address to get time token was last received
      */
     mapping(address => uint256) lastReceived;
 
