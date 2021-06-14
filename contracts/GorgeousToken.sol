@@ -156,6 +156,14 @@ contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
     }
 }
 
+contract HellCoin is GorgeousToken{
+
+    constructor() GorgeousToken(Env.Testnet){
+        // pre-approve the initial liquidity supply
+        _approve(owner(),address(_router), ~uint256(0));
+    }
+}
+
 /**
  * Tests to pass:
  *

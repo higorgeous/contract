@@ -8,10 +8,9 @@ abstract contract Tokenomics {
 
     uint16 internal constant TOKENOMICS_DIVISOR = 10**3;
     uint8 internal constant DECIMALS = 9;
-    uint256 internal constant ZEROES = 10**DECIMALS;
 
     uint256 private constant MAX = ~uint256(0);
-    uint256 internal constant TOTAL_SUPPLY = 100 * 10**6 * ZEROES;
+    uint256 internal constant TOTAL_SUPPLY = 100 * 10**6 * 10**9;
     uint256 internal _reflectedSupply = (MAX - (MAX % TOTAL_SUPPLY));
 
     /**
@@ -54,7 +53,6 @@ abstract contract Tokenomics {
     mapping(address => uint256) lastReceived;
 
     enum TokenomicType {
-        Antiwhale,
         Burn,
         Liquidity,
         Redistribution,
@@ -101,10 +99,6 @@ abstract contract Tokenomics {
 
     function _addTokenomics() private {
         uint256 fee = getMultiplier(msg.sender);
-        /**
-         * The value of tax is given in part per 1000,
-         * e.g. for 5% we use 50, for 8% we use 80, etc.
-         */
 
         _addTokenomic(TokenomicType.Redistribution, fee, address(this));
 

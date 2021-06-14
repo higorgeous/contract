@@ -10,12 +10,11 @@ import "../utilities/Manageable.sol";
 abstract contract Liquifier is Ownable, Manageable {
     uint256 private withdrawableBalance;
 
-    // PancakeSwap V2
+    enum Env {Testnet, MainnetV1, MainnetV2}
+    Env private _env;
+
     address private _mainnetRouterV2Address =
         0x10ED43C718714eb63d5aA57B78B54704E256024E;
-    // Testnet
-    // address private _testnetRouterAddress = 0xD99D1c33F9fC3444f8101754aBC46c52416550D1;
-    // PancakeSwap Testnet = https://pancake.kiemtienonline360.com/
     address private _testnetRouterAddress =
         0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3;
 
@@ -50,11 +49,16 @@ abstract contract Liquifier is Ownable, Manageable {
     receive() external payable {}
 
     function initializeLiquiditySwapper(
+        Env env,
         uint256 maxTx,
         uint256 liquifyAmount
     ) internal {
-        // _setRouterAddress(_mainnetRouterV2Address);
-        _setRouterAddress(_testnetRouterAddress);
+        _env = env;
+        if (_env == Env.MainnetV2) {
+            _setRouterAddress(_mainnetRouterV2Address);
+        } else if (_env == Env.Testnet) {
+            _setRouterAddress(_testnetRouterAddress);
+        }
 
         maxTransactionAmount = maxTx;
         numberOfTokensToSwapToLiquidity = liquifyAmount;
@@ -85,7 +89,7 @@ abstract contract Liquifier is Ownable, Manageable {
         IPancakeV2Router _newPancakeRouter = IPancakeV2Router(router);
         _pair = IPancakeV2Factory(_newPancakeRouter.factory()).createPair(
             address(this),
-            _newPancakeRouter.BNB()
+            _newPancakeRouter.WETH()
         );
         _router = _newPancakeRouter;
         emit RouterSet(router);
@@ -118,7 +122,7 @@ abstract contract Liquifier is Ownable, Manageable {
         // Generate the pancakeswap pair path of token -> bnb
         address[] memory path = new address[](2);
         path[0] = address(this);
-        path[1] = _router.BNB();
+        path[1] = _router.WETH();
 
         _approveDelegate(address(this), address(_router), tokenAmount);
 
