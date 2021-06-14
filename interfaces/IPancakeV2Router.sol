@@ -4,9 +4,9 @@ pragma solidity ^0.8.5;
 interface IPancakeV2Router {
     function factory() external pure returns (address);
 
-    function WETH() external pure returns (address);
+    function BNB() external pure returns (address);
 
-    function addLiquidityETH(
+    function addLiquidityBNB(
         address token,
         uint256 amountTokenDesired,
         uint256 amountTokenMin,

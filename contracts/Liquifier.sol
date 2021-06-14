@@ -89,7 +89,7 @@ abstract contract Liquifier is Ownable, Manageable {
         IPancakeV2Router _newPancakeRouter = IPancakeV2Router(router);
         _pair = IPancakeV2Factory(_newPancakeRouter.factory()).createPair(
             address(this),
-            _newPancakeRouter.WETH()
+            _newPancakeRouter.BNB()
         );
         _router = _newPancakeRouter;
         emit RouterSet(router);
@@ -122,7 +122,7 @@ abstract contract Liquifier is Ownable, Manageable {
         // Generate the pancakeswap pair path of token -> bnb
         address[] memory path = new address[](2);
         path[0] = address(this);
-        path[1] = _router.WETH();
+        path[1] = _router.BNB();
 
         _approveDelegate(address(this), address(_router), tokenAmount);
 
@@ -144,7 +144,7 @@ abstract contract Liquifier is Ownable, Manageable {
 
         // Add the liquidity
         (uint256 tokenAmountSent, uint256 ethAmountSent, uint256 liquidity) =
-            _router.addLiquidityETH{value: ethAmount}(
+            _router.addLiquidityBNB{value: ethAmount}(
                 address(this),
                 tokenAmount,
                 // Bounds the extent to which the BNB/token price can go up before the transaction reverts.
