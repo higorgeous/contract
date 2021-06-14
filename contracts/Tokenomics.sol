@@ -86,7 +86,7 @@ abstract contract Tokenomics is Presaleable {
         _updateLastReceived(recipient);
     }
 
-    function getMultiplier(address _sender) internal view returns (uint256) {
+    function _getMultiplier(address _sender) internal view returns (uint256) {
         uint256 timeReceived = block.timestamp - lastReceived[_sender];
         if (timeReceived < 1 hours) {
             return 100;
@@ -101,9 +101,9 @@ abstract contract Tokenomics is Presaleable {
     }
 
     function _addTokenomics() private {
-        uint256 fee = getMultiplier(msg.sender);
+        // uint256 fee = _getMultiplier(msg.sender);
 
-        _addTokenomic(TokenomicType.Redistribution, fee, address(this));
+        _addTokenomic(TokenomicType.Redistribution, 50, address(this));
 
         _addTokenomic(TokenomicType.Burn, 10, burnAddress);
         _addTokenomic(TokenomicType.Liquidity, 50, address(this));
