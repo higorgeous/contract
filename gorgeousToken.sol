@@ -25,7 +25,7 @@ import "./contracts/BaseRedistribution.sol";
 import "./contracts/Liquifier.sol";
 import "./contracts/Antiwhale.sol";
 
-abstract contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
+contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
     constructor() {
         initializeLiquiditySwapper(
             maxTransactionAmount,
