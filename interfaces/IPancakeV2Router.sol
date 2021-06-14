@@ -4,13 +4,13 @@ pragma solidity ^0.8.5;
 interface IPancakeV2Router {
     function factory() external pure returns (address);
 
-    function WETH() external pure returns (address);
+    function WBNB() external pure returns (address);
 
-    function addLiquidityETH(
+    function addLiquidityBNB(
         address token,
         uint256 amountTokenDesired,
         uint256 amountTokenMin,
-        uint256 amountETHMin,
+        uint256 amountBNBMin,
         address to,
         uint256 deadline
     )
@@ -18,11 +18,11 @@ interface IPancakeV2Router {
         payable
         returns (
             uint256 amountToken,
-            uint256 amountETH,
+            uint256 amountBNB,
             uint256 liquidity
         );
 
-    function swapExactTokensForETHSupportingFeeOnTransferTokens(
+    function swapExactTokensForBNBSupportingFeeOnTransferTokens(
         uint256 amountIn,
         uint256 amountOutMin,
         address[] calldata path,
