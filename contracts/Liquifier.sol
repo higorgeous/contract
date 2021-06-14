@@ -10,6 +10,9 @@ import "../utilities/Manageable.sol";
 abstract contract Liquifier is Ownable, Manageable {
     uint256 private withdrawableBalance;
 
+    enum Env {Testnet, Mainnet}
+    Env private _env;
+
     // PancakeSwap V2
     address private _mainnetRouterV2Address =
         0x10ED43C718714eb63d5aA57B78B54704E256024E;
@@ -47,11 +50,13 @@ abstract contract Liquifier is Ownable, Manageable {
     receive() external payable {}
 
     function initializeLiquiditySwapper(
+        Env env,
         uint256 maxTx,
         uint256 liquifyAmount
     ) internal {
-        _setRouterAddress(_mainnetRouterV2Address);
-        // _setRouterAddress(_testnetRouterAddress);
+        _env = env;
+        if (_env == Env.Mainnet){ _setRouterAddress(_mainnetRouterV2Address); }
+        else /*(_env == Env.Testnet)*/{ _setRouterAddress(_testnetRouterAddress); }
 
         maxTransactionAmount = maxTx;
         numberOfTokensToSwapToLiquidity = liquifyAmount;

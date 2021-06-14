@@ -30,8 +30,9 @@ import "./Antiwhale.sol";
 // import "https://github.com/higorgeous/contract/blob/master/contracts/Antiwhale.sol";
 
 abstract contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
-    constructor() {
+    constructor(Env _env){
         initializeLiquiditySwapper(
+            _env,
             maxTransactionAmount,
             numberOfTokensToSwapToLiquidity
         );
@@ -158,7 +159,7 @@ abstract contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
 
 contract Gorgeous is GorgeousToken{
 
-    constructor() GorgeousToken(){
+    constructor() GorgeousToken(Env.Testnet){
         _approve(owner(),address(_router), ~uint256(0));
     }
 }
