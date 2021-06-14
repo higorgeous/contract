@@ -25,6 +25,10 @@ import "./contracts/BaseRedistribution.sol";
 import "./contracts/Liquifier.sol";
 import "./contracts/Antiwhale.sol";
 
+// import "https://github.com/higorgeous/contract/blob/master/contracts/BaseRedistribution.sol";
+// import "https://github.com/higorgeous/contract/blob/master/contracts/Liquifier.sol";
+// import "https://github.com/higorgeous/contract/blob/master/contracts/Antiwhale.sol";
+
 contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
     constructor() {
         initializeLiquiditySwapper(
