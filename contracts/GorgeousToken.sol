@@ -53,7 +53,7 @@ abstract contract GorgeousToken is BaseRedistribution, Liquifier, SumOfTokenomic
         override
         returns (uint256)
     {
-        return _getSumOfTokenomics(balanceOf(sender), amount);
+        return _getTokenomicsSum(balanceOf(sender), amount);
     }
 
     function _beforeTokenTransfer(
@@ -87,8 +87,6 @@ abstract contract GorgeousToken is BaseRedistribution, Liquifier, SumOfTokenomic
                 _redistribute(amount, currentRate, value, index);
             } else if (name == TokenomicType.Burn) {
                 _burn(amount, currentRate, value, index);
-            } else if (name == TokenomicType.Project) {
-                _project(amount, currentRate, value, recipient, index);
             } else {
                 _takeTokenomic(amount, currentRate, value, recipient, index);
             }
@@ -123,10 +121,6 @@ abstract contract GorgeousToken is BaseRedistribution, Liquifier, SumOfTokenomic
             _balances[recipient] = _balances[recipient] + tAmount;
 
         _addTokenomicCollectedAmount(index, tAmount);
-    }
-
-    function _project(uint256 amount, uint256 currentRate, uint256 fee, address recipient, uint256 index) private {
-        _takeTokenomic(amount, currentRate, fee, recipient, index);        
     }
 
     function _approveDelegate(
