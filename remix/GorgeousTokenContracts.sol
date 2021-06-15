@@ -12,7 +12,9 @@
 // Decimals: 9
 // ----------------------------------------------------------------------------
 // Max buy 2% max, hold 5%
-// 100% Liquidity burned, Ownership renounced
+// 50% Burnt to dead wallet
+// 40% Liquidity in pool
+// Ownership renounced
 // ----------------------------------------------------------------------------
 // Sell within 1 hour: 35% burn (1% Burn, 10% Back to the Liquidity Pool, 7% To charity wallet, 7% To project wallet, 9% Redistributed to Holders)
 // Sell within 2 hours: 25% burn (1% Burn, 8% Back to the Liquidity Pool, 5% To charity wallet, 5% To project wallet, 7% Redistributed to Holders)
@@ -74,13 +76,7 @@ abstract contract Tokenomics {
      */
     mapping(address => uint256) lastReceived;
 
-    enum TokenomicType {
-        Burn,
-        Liquidity,
-        Redistribution,
-        External,
-        ExternalToBNB
-    }
+    enum TokenomicType {Burn, Liquidity, Redistribution, Project, External}
     struct Tokenomic {
         TokenomicType name;
         uint256 value;
@@ -105,14 +101,32 @@ abstract contract Tokenomics {
         _updateLastReceived(recipient);
     }
 
-    function _getMultiplier(address _sender) internal view returns (uint256) {
+    function _getDistMultiplier(address _sender)
+        internal
+        view
+        returns (uint256)
+    {
         uint256 timeReceived = block.timestamp - lastReceived[_sender];
         if (timeReceived < 1 hours) {
             return 100;
         } else if (timeReceived < 2 hours) {
-            return 80;
+            return 70;
         }
-        return 50;
+        return 40;
+    }
+
+    function _getProjectMultiplier(address _sender)
+        internal
+        view
+        returns (uint256)
+    {
+        uint256 timeReceived = block.timestamp - lastReceived[_sender];
+        if (timeReceived < 1 hours) {
+            return 70;
+        } else if (timeReceived < 2 hours) {
+            return 50;
+        }
+        return 30;
     }
 
     function _updateLastReceived(address _receiver) internal {
@@ -120,14 +134,15 @@ abstract contract Tokenomics {
     }
 
     function _addTokenomics() private {
-        uint256 fee = _getMultiplier(msg.sender);
+        uint256 cfee = _getDistMultiplier(msg.sender);
+        uint256 pfee = _getProjectMultiplier(msg.sender);
 
-        _addTokenomic(TokenomicType.Redistribution, fee, address(this));
+        _addTokenomic(TokenomicType.Redistribution, cfee, address(this));
 
         _addTokenomic(TokenomicType.Burn, 10, burnAddress);
-        _addTokenomic(TokenomicType.Liquidity, fee, address(this));
-        _addTokenomic(TokenomicType.ExternalToBNB, fee, charityAddress);
-        _addTokenomic(TokenomicType.External, fee, projectAddress);
+        _addTokenomic(TokenomicType.Liquidity, cfee, address(this));
+        _addTokenomic(TokenomicType.Project, pfee, charityAddress);
+        _addTokenomic(TokenomicType.Project, pfee, projectAddress);
     }
 
     function _getTokenomicsCount() internal view returns (uint256) {
@@ -607,7 +622,8 @@ abstract contract BaseRedistribution is
             uint256
         )
     {
-        uint256 tTotalTokenomics = (tAmount * tokenomicsSum) / TOKENOMICS_DIVISOR;
+        uint256 tTotalTokenomics =
+            (tAmount * tokenomicsSum) / TOKENOMICS_DIVISOR;
         uint256 tTransferAmount = tAmount - tTotalTokenomics;
         uint256 currentRate = _getCurrentRate();
         uint256 rAmount = tAmount * currentRate;
@@ -988,14 +1004,6 @@ abstract contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
                 _redistribute(amount, currentRate, value, index);
             } else if (name == TokenomicType.Burn) {
                 _burn(amount, currentRate, value, index);
-            } else if (name == TokenomicType.ExternalToBNB) {
-                _takeTokenomicsToBNB(
-                    amount,
-                    currentRate,
-                    value,
-                    recipient,
-                    index
-                );
             } else {
                 _takeTokenomics(amount, currentRate, value, recipient, index);
             }
@@ -1030,23 +1038,6 @@ abstract contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
             _balances[recipient] = _balances[recipient] + tAmount;
 
         _addTokenomicCollectedAmount(index, tAmount);
-    }
-
-    /**
-     * When implemented this will convert the tokenomic amount of tokens into BNB
-     * and send to the recipient's wallet. Note that this reduces liquidity so it
-     * might be a good idea to add a % into the liquidity tokenomic for % you take
-     * our through this method (just a suggestions)
-     */
-    function _takeTokenomicsToBNB(
-        uint256 amount,
-        uint256 currentRate,
-        uint256 tokenomic,
-        address recipient,
-        uint256 index
-    ) private {
-        _takeTokenomics(amount, currentRate, tokenomic, recipient, index);
-        (amount, currentRate, tokenomic, recipient, index);
     }
 
     function _approveDelegate(

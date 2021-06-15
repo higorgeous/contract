@@ -12,7 +12,9 @@
 // Decimals: 9
 // ----------------------------------------------------------------------------
 // Max buy 2% max, hold 5%
-// 100% Liquidity burned, Ownership renounced
+// 50% Burnt to dead wallet
+// 40% Liquidity in pool
+// Ownership renounced
 // ----------------------------------------------------------------------------
 // Sell within 1 hour: 35% burn (1% Burn, 10% Back to the Liquidity Pool, 7% To charity wallet, 7% To project wallet, 9% Redistributed to Holders)
 // Sell within 2 hours: 25% burn (1% Burn, 8% Back to the Liquidity Pool, 5% To charity wallet, 5% To project wallet, 7% Redistributed to Holders)
@@ -87,8 +89,7 @@ abstract contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
                 _redistribute(amount, currentRate, value, index);
             } else if (name == TokenomicType.Burn) {
                 _burn(amount, currentRate, value, index);
-            }
-             else {
+            } else {
                 _takeTokenomics(amount, currentRate, value, recipient, index);
             }
         }
