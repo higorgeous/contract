@@ -16,9 +16,7 @@
 // 40% Liquidity in pool
 // Ownership renounced
 // ----------------------------------------------------------------------------
-// Sell within 1 hour: 35% burn (1% Burn, 10% Back to the Liquidity Pool, 7% To charity wallet, 7% To project wallet, 9% Redistributed to Holders)
-// Sell within 2 hours: 25% burn (1% Burn, 8% Back to the Liquidity Pool, 5% To charity wallet, 5% To project wallet, 7% Redistributed to Holders)
-// Standard burn: 15% burn (1% Burn, 4% Back to the Liquidity Pool, 3% To charity wallet, 3% To project wallet, 4% Redistributed to Holders)
+// Redistribution fee: 15% burn (1% Burn, 4% Back to the Liquidity Pool, 3% To charity wallet, 3% To project wallet, 4% Redistributed to Holders)
 // ----------------------------------------------------------------------------
 
 pragma solidity ^0.8.5;
