@@ -23,15 +23,15 @@
 
 pragma solidity ^0.8.5;
 
-import "./Antiwhale.sol";
+import "./SumOfTokenomics.sol";
 import "./BaseRedistribution.sol";
 import "./Liquifier.sol";
 
-// import "https://github.com/higorgeous/contract/blob/master/contracts/Antiwhale.sol";
+// import "https://github.com/higorgeous/contract/blob/master/contracts/SumOfTokenomics.sol";
 // import "https://github.com/higorgeous/contract/blob/master/contracts/BaseRedistribution.sol";
 // import "https://github.com/higorgeous/contract/blob/master/contracts/Liquifier.sol";
 
-abstract contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
+abstract contract GorgeousToken is BaseRedistribution, Liquifier, SumOfTokenomics {
     constructor(Env _env) {
         initializeLiquiditySwapper(
             _env,
@@ -55,7 +55,7 @@ abstract contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
         override
         returns (uint256)
     {
-        return _getAntiwhaleTokenomics(balanceOf(sender), amount);
+        return _getSumOfTokenomics(balanceOf(sender), amount);
     }
 
     function _beforeTokenTransfer(

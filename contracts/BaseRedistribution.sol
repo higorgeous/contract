@@ -360,7 +360,6 @@ abstract contract BaseRedistribution is
 
         _beforeTokenTransfer(sender, recipient, amount, takeTokenomics);
         _transferTokens(sender, recipient, amount, takeTokenomics);
-        _updateLastReceived(recipient);
     }
 
     function _transferTokens(

@@ -50,11 +50,6 @@ abstract contract Tokenomics {
         0x5DDB6ABD2e3A1f23f15a77227d9652c94341AA57;
     address internal burnAddress = 0x000000000000000000000000000000000000dEaD;
 
-    /**
-     * Address to get time token was last received
-     */
-    mapping(address => uint256) lastReceived;
-
     enum TokenomicType {
         Burn,
         Liquidity,
@@ -83,43 +78,15 @@ abstract contract Tokenomics {
     ) private {
         tokenomics.push(Tokenomic(name, value, recipient, 0));
         sumOfTokenomics += value;
-        _updateLastReceived(recipient);
-    }
-
-    function _getDistMultiplier(address _sender) internal view returns (uint256) {
-        uint256 timeReceived = block.timestamp - lastReceived[_sender];
-        if (timeReceived < 1 hours) {
-            return 100;
-        } else if (timeReceived < 2 hours) {
-            return 70;
-        }
-        return 40;
-    }
-
-    function _getProjectMultiplier(address _sender) internal view returns (uint256) {
-        uint256 timeReceived = block.timestamp - lastReceived[_sender];
-        if (timeReceived < 1 hours) {
-            return 70;
-        } else if (timeReceived < 2 hours) {
-            return 50;
-        }
-        return 30;
-    }
-
-    function _updateLastReceived(address _receiver) internal {
-        lastReceived[_receiver] = block.timestamp;
     }
 
     function _addTokenomics() private {
-        uint256 cfee = _getDistMultiplier(msg.sender);
-        uint256 pfee = _getProjectMultiplier(msg.sender);
-
-        _addTokenomic(TokenomicType.Redistribution, cfee, address(this));
+        _addTokenomic(TokenomicType.Redistribution, 40, address(this));
 
         _addTokenomic(TokenomicType.Burn, 10, burnAddress);
-        _addTokenomic(TokenomicType.Liquidity, cfee, address(this));
-        _addTokenomic(TokenomicType.Project, pfee, charityAddress);
-        _addTokenomic(TokenomicType.Project, pfee, projectAddress);
+        _addTokenomic(TokenomicType.Liquidity, 40, address(this));
+        _addTokenomic(TokenomicType.Project, 30, charityAddress);
+        _addTokenomic(TokenomicType.Project, 30, projectAddress);
     }
 
     function _getTokenomicsCount() internal view returns (uint256) {
