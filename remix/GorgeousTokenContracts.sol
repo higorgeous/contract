@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 
-// GRGS - Gorgeous: BEP20 token contract
+// GORGEOUS - Gorgeous: BEP20 token contract
 // Telegram: https://t.me/gorgeoustoken
 // Website: https://www.higorgeous.io/
 
 // TOKENOMICS
 // ----------------------------------------------------------------------------
-// Symbol: GRGS
+// Symbol: GORGEOUS
 // Name: Gorgeous
 // Total supply: 100,000,000.000000000000000000
 // Decimals: 9
@@ -14,9 +14,9 @@
 // Max buy 2% max, hold 5%
 // 100% Liquidity burned, Ownership renounced
 // ----------------------------------------------------------------------------
-// Sell within 1 hour: 41% burn (1% Burn, 10% Back to the Liquidity Pool, 10% To charity wallet, 10% To operating wallet, 10% Redistributed to Holders)
-// Sell within 2 hours: 33% burn (1% Burn, 8% Back to the Liquidity Pool, 8% To charity wallet, 8% To operating wallet, 8% Redistributed to Holders)
-// Standard burn: 21% burn (1% Burn, 5% Back to the Liquidity Pool, 5% To charity wallet, 5% To operating wallet, 5% Redistributed to Holders)
+// Sell within 1 hour: 35% burn (1% Burn, 10% Back to the Liquidity Pool, 7% To charity wallet, 7% To project wallet, 9% Redistributed to Holders)
+// Sell within 2 hours: 25% burn (1% Burn, 8% Back to the Liquidity Pool, 5% To charity wallet, 5% To project wallet, 7% Redistributed to Holders)
+// Standard burn: 15% burn (1% Burn, 4% Back to the Liquidity Pool, 3% To charity wallet, 3% To project wallet, 4% Redistributed to Holders)
 // ----------------------------------------------------------------------------
 
 pragma solidity ^0.8.5;
@@ -120,14 +120,14 @@ abstract contract Tokenomics {
     }
 
     function _addTokenomics() private {
-        // uint256 fee = _getMultiplier(msg.sender);
+        uint256 fee = _getMultiplier(msg.sender);
 
-        _addTokenomic(TokenomicType.Redistribution, 50, address(this));
+        _addTokenomic(TokenomicType.Redistribution, fee, address(this));
 
         _addTokenomic(TokenomicType.Burn, 10, burnAddress);
-        _addTokenomic(TokenomicType.Liquidity, 50, address(this));
-        _addTokenomic(TokenomicType.ExternalToBNB, 50, charityAddress);
-        _addTokenomic(TokenomicType.External, 50, projectAddress);
+        _addTokenomic(TokenomicType.Liquidity, fee, address(this));
+        _addTokenomic(TokenomicType.ExternalToBNB, fee, charityAddress);
+        _addTokenomic(TokenomicType.External, fee, projectAddress);
     }
 
     function _getTokenomicsCount() internal view returns (uint256) {

@@ -4,7 +4,7 @@ pragma solidity ^0.8.5;
 
 import "./Presaleable.sol";
 
-abstract contract Tokenomics is Presaleable {
+abstract contract Tokenomics {
     string internal constant NAME = "Gorgeous Token";
     string internal constant SYMBOL = "GORGEOUS";
 
@@ -59,8 +59,8 @@ abstract contract Tokenomics is Presaleable {
         Burn,
         Liquidity,
         Redistribution,
-        External,
-        ExternalToBNB
+        Project,
+        External
     }
     struct Tokenomic {
         TokenomicType name;
@@ -86,14 +86,24 @@ abstract contract Tokenomics is Presaleable {
         _updateLastReceived(recipient);
     }
 
-    function _getMultiplier(address _sender) internal view returns (uint256) {
+    function _getDistMultiplier(address _sender) internal view returns (uint256) {
         uint256 timeReceived = block.timestamp - lastReceived[_sender];
         if (timeReceived < 1 hours) {
             return 100;
         } else if (timeReceived < 2 hours) {
-            return 80;
+            return 70;
         }
-        return 50;
+        return 40;
+    }
+
+    function _getProjectMultiplier(address _sender) internal view returns (uint256) {
+        uint256 timeReceived = block.timestamp - lastReceived[_sender];
+        if (timeReceived < 1 hours) {
+            return 70;
+        } else if (timeReceived < 2 hours) {
+            return 50;
+        }
+        return 30;
     }
 
     function _updateLastReceived(address _receiver) internal {
@@ -101,14 +111,15 @@ abstract contract Tokenomics is Presaleable {
     }
 
     function _addTokenomics() private {
-        // uint256 fee = _getMultiplier(msg.sender);
+        uint256 cfee = _getDistMultiplier(msg.sender);
+        uint256 pfee = _getProjectMultiplier(msg.sender);
 
-        _addTokenomic(TokenomicType.Redistribution, 50, address(this));
+        _addTokenomic(TokenomicType.Redistribution, cfee, address(this));
 
         _addTokenomic(TokenomicType.Burn, 10, burnAddress);
-        _addTokenomic(TokenomicType.Liquidity, 50, address(this));
-        _addTokenomic(TokenomicType.ExternalToBNB, 50, charityAddress);
-        _addTokenomic(TokenomicType.ExternalToBNB, 50, projectAddress);
+        _addTokenomic(TokenomicType.Liquidity, cfee, address(this));
+        _addTokenomic(TokenomicType.Project, pfee, charityAddress);
+        _addTokenomic(TokenomicType.Project, pfee, projectAddress);
     }
 
     function _getTokenomicsCount() internal view returns (uint256) {

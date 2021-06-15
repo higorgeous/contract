@@ -12,11 +12,11 @@ import "../libraries/Address.sol";
 import "../utilities/Ownable.sol";
 
 abstract contract BaseRedistribution is
-    Presaleable,
-    Tokenomics,
     IERC20,
     IERC20Metadata,
-    Ownable
+    Ownable,
+    Presaleable,
+    Tokenomics
 {
     using Address for address;
 

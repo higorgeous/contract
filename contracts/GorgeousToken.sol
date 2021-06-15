@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 
-// GRGS - Gorgeous: BEP20 token contract
+// GORGEOUS - Gorgeous: BEP20 token contract
 // Telegram: https://t.me/gorgeoustoken
 // Website: https://www.higorgeous.io/
 
 // TOKENOMICS
 // ----------------------------------------------------------------------------
-// Symbol: GRGS
+// Symbol: GORGEOUS
 // Name: Gorgeous
 // Total supply: 100,000,000.000000000000000000
 // Decimals: 9
@@ -14,9 +14,9 @@
 // Max buy 2% max, hold 5%
 // 100% Liquidity burned, Ownership renounced
 // ----------------------------------------------------------------------------
-// Sell within 1 hour: 41% burn (1% Burn, 10% Back to the Liquidity Pool, 10% To charity wallet, 10% To operating wallet, 10% Redistributed to Holders)
-// Sell within 2 hours: 33% burn (1% Burn, 8% Back to the Liquidity Pool, 8% To charity wallet, 8% To operating wallet, 8% Redistributed to Holders)
-// Standard burn: 21% burn (1% Burn, 5% Back to the Liquidity Pool, 5% To charity wallet, 5% To operating wallet, 5% Redistributed to Holders)
+// Sell within 1 hour: 35% burn (1% Burn, 10% Back to the Liquidity Pool, 7% To charity wallet, 7% To project wallet, 9% Redistributed to Holders)
+// Sell within 2 hours: 25% burn (1% Burn, 8% Back to the Liquidity Pool, 5% To charity wallet, 5% To project wallet, 7% Redistributed to Holders)
+// Standard burn: 15% burn (1% Burn, 4% Back to the Liquidity Pool, 3% To charity wallet, 3% To project wallet, 4% Redistributed to Holders)
 // ----------------------------------------------------------------------------
 
 pragma solidity ^0.8.5;
@@ -29,8 +29,8 @@ import "./Liquifier.sol";
 // import "https://github.com/higorgeous/contract/blob/master/contracts/BaseRedistribution.sol";
 // import "https://github.com/higorgeous/contract/blob/master/contracts/Liquifier.sol";
 
-abstract contract GorgeousToken is Antiwhale, BaseRedistribution, Liquifier {
-    constructor(Env _env){
+abstract contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
+    constructor(Env _env) {
         initializeLiquiditySwapper(
             _env,
             maxTransactionAmount,
@@ -87,15 +87,8 @@ abstract contract GorgeousToken is Antiwhale, BaseRedistribution, Liquifier {
                 _redistribute(amount, currentRate, value, index);
             } else if (name == TokenomicType.Burn) {
                 _burn(amount, currentRate, value, index);
-            } else if (name == TokenomicType.ExternalToBNB) {
-                _takeTokenomicsToBNB(
-                    amount,
-                    currentRate,
-                    value,
-                    recipient,
-                    index
-                );
-            } else {
+            }
+             else {
                 _takeTokenomics(amount, currentRate, value, recipient, index);
             }
         }
@@ -131,23 +124,6 @@ abstract contract GorgeousToken is Antiwhale, BaseRedistribution, Liquifier {
         _addTokenomicCollectedAmount(index, tAmount);
     }
 
-    /**
-     * When implemented this will convert the tokenomic amount of tokens into BNB
-     * and send to the recipient's wallet. Note that this reduces liquidity so it
-     * might be a good idea to add a % into the liquidity tokenomic for % you take
-     * our through this method (just a suggestions)
-     */
-    function _takeTokenomicsToBNB(
-        uint256 amount,
-        uint256 currentRate,
-        uint256 tokenomic,
-        address recipient,
-        uint256 index
-    ) private {
-        _takeTokenomics(amount, currentRate, tokenomic, recipient, index);
-        (amount, currentRate, tokenomic, recipient, index);
-    }
-
     function _approveDelegate(
         address owner,
         address spender,
@@ -158,7 +134,7 @@ abstract contract GorgeousToken is Antiwhale, BaseRedistribution, Liquifier {
 }
 
 contract Gorgeous is GorgeousToken {
-    constructor() GorgeousToken(Env.Testnet){
-        _approve(owner(),address(_router), ~uint256(0));
+    constructor() GorgeousToken(Env.Testnet) {
+        _approve(owner(), address(_router), ~uint256(0));
     }
 }
