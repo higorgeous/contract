@@ -16,7 +16,7 @@
 // 40% Liquidity in pool
 // Ownership renounced
 // ----------------------------------------------------------------------------
-// Redistribution fee: 15% burn (1% Burn, 4% Back to the Liquidity Pool, 3% To charity wallet, 3% To project wallet, 4% Redistributed to Holders)
+// Redistribution fee: 15% burn (1% Burn, 4% Back to the Liquidity Pool, 3% To charity wallet, 3% To operating wallet, 4% Redistributed to Holders)
 // ----------------------------------------------------------------------------
 
 pragma solidity ^0.8.5;
@@ -87,8 +87,10 @@ abstract contract GorgeousToken is BaseRedistribution, Liquifier, SumOfTokenomic
                 _redistribute(amount, currentRate, value, index);
             } else if (name == TokenomicType.Burn) {
                 _burn(amount, currentRate, value, index);
+            } else if (name == TokenomicType.Project) {
+                _project(amount, currentRate, value, recipient, index);
             } else {
-                _takeTokenomics(amount, currentRate, value, recipient, index);
+                _takeTokenomic(amount, currentRate, value, recipient, index);
             }
         }
     }
@@ -106,7 +108,7 @@ abstract contract GorgeousToken is BaseRedistribution, Liquifier, SumOfTokenomic
         _addTokenomicCollectedAmount(index, tBurn);
     }
 
-    function _takeTokenomics(
+    function _takeTokenomic(
         uint256 amount,
         uint256 currentRate,
         uint256 tokenomic,
@@ -121,6 +123,10 @@ abstract contract GorgeousToken is BaseRedistribution, Liquifier, SumOfTokenomic
             _balances[recipient] = _balances[recipient] + tAmount;
 
         _addTokenomicCollectedAmount(index, tAmount);
+    }
+
+    function _project(uint256 amount, uint256 currentRate, uint256 fee, address recipient, uint256 index) private {
+        _takeTokenomic(amount, currentRate, fee, recipient, index);        
     }
 
     function _approveDelegate(

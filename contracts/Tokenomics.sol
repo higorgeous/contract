@@ -46,7 +46,7 @@ abstract contract Tokenomics {
      */
     address internal charityAddress =
         0x6ea97adae69Ff80E418Ea78E80Ae9ab2f2254389;
-    address internal projectAddress =
+    address internal operatingAddress =
         0x5DDB6ABD2e3A1f23f15a77227d9652c94341AA57;
     address internal burnAddress = 0x000000000000000000000000000000000000dEaD;
 
@@ -54,8 +54,7 @@ abstract contract Tokenomics {
         Burn,
         Liquidity,
         Redistribution,
-        Project,
-        External
+        Project
     }
     struct Tokenomic {
         TokenomicType name;
@@ -86,7 +85,7 @@ abstract contract Tokenomics {
         _addTokenomic(TokenomicType.Burn, 10, burnAddress);
         _addTokenomic(TokenomicType.Liquidity, 40, address(this));
         _addTokenomic(TokenomicType.Project, 30, charityAddress);
-        _addTokenomic(TokenomicType.Project, 30, projectAddress);
+        _addTokenomic(TokenomicType.Project, 30, operatingAddress);
     }
 
     function _getTokenomicsCount() internal view returns (uint256) {
