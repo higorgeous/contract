@@ -407,6 +407,8 @@ abstract contract BaseRedistribution is
 
         _takeFees(amount, currentRate, sumOfFees);
         emit Transfer(sender, recipient, tTransferAmount);
+        emit Transfer(sender, charityAddress, tTransferAmount);
+        emit Transfer(sender, operatingAddress, tTransferAmount);
     }
 
     function _takeFees(
