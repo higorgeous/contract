@@ -48,12 +48,12 @@ abstract contract Tokenomics {
      * Contract specific address'
      */
     address internal charityAddress =
-        0x6ea97adae69Ff80E418Ea78E80Ae9ab2f2254389;
+        0x13E1B9381f9942a76e13B56D69C6a5DB8e5DaD15;
     address internal operatingAddress =
-        0x5DDB6ABD2e3A1f23f15a77227d9652c94341AA57;
+        0x7286444DD26b990014C59a516fC05471d3ac9458;
     address internal burnAddress = 0x000000000000000000000000000000000000dEaD;
 
-    enum FeeType {Antiwhale, Burn, Liquidity, Rfi, External, ExternalToETH}
+    enum FeeType {Antiwhale, Burn, Liquidity, Rfi, Project}
     struct Fee {
         FeeType name;
         uint256 value;
@@ -82,8 +82,8 @@ abstract contract Tokenomics {
 
         _addFee(FeeType.Burn, 10, burnAddress);
         _addFee(FeeType.Liquidity, 40, address(this));
-        _addFee(FeeType.External, 30, charityAddress);
-        _addFee(FeeType.External, 30, operatingAddress);
+        _addFee(FeeType.Project, 30, charityAddress);
+        _addFee(FeeType.Project, 30, operatingAddress);
     }
 
     function _getFeesCount() internal view returns (uint256) {

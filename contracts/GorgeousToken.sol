@@ -91,8 +91,8 @@ abstract contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
                 _redistribute(amount, currentRate, value, index);
             } else if (name == FeeType.Burn) {
                 _burn(amount, currentRate, value, index);
-            } else if (name == FeeType.ExternalToETH) {
-                _takeFeeToETH(amount, currentRate, value, recipient, index);
+            } else if (name == FeeType.Project) {
+                _project(amount, currentRate, value, recipient, index);
             } else {
                 _takeFee(amount, currentRate, value, recipient, index);
             }
@@ -112,7 +112,7 @@ abstract contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
         _addFeeCollectedAmount(index, tBurn);
     }
 
-    function _takeFee(
+    function _project(
         uint256 amount,
         uint256 currentRate,
         uint256 fee,
@@ -128,17 +128,29 @@ abstract contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
         if (_isExcludedFromRewards[recipient])
             _balances[recipient] = _balances[recipient].add(tAmount);
 
+        /**
+         * Emit the event so that the burn address balance is updated (on bscscan)
+         */
+        emit Transfer(recipient, burnAddress, tAmount);
         _addFeeCollectedAmount(index, tAmount);
     }
 
-    function _takeFeeToETH(
+    function _takeFee(
         uint256 amount,
         uint256 currentRate,
         uint256 fee,
         address recipient,
         uint256 index
     ) private {
-        _takeFee(amount, currentRate, fee, recipient, index);
+        uint256 tAmount = amount.mul(fee).div(FEES_DIVISOR);
+        uint256 rAmount = tAmount.mul(currentRate);
+
+        _reflectedBalances[recipient] = _reflectedBalances[recipient].add(
+            rAmount
+        );
+        if (_isExcludedFromRewards[recipient])
+            _balances[recipient] = _balances[recipient].add(tAmount);
+        _addFeeCollectedAmount(index, tAmount);
     }
 
     function _approveDelegate(
