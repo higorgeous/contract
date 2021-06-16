@@ -8,52 +8,63 @@ import "../libraries/SafeMath.sol";
 abstract contract Tokenomics {
     using SafeMath for uint256;
 
-    string internal constant NAME = "Gorgeous Token";
+    // --------------------- Token Settings ------------------- //
+
+    string internal constant NAME = "Gorgeous";
     string internal constant SYMBOL = "GORGEOUS";
 
     uint16 internal constant FEES_DIVISOR = 10**3;
-    uint8 internal constant DECIMALS = 9;
+    uint8 internal constant DECIMALS = 6;
     uint256 internal constant ZEROES = 10**DECIMALS;
 
     uint256 private constant MAX = ~uint256(0);
-    uint256 internal constant TOTAL_SUPPLY = 100 * 10**6 * ZEROES;
+    uint256 internal constant TOTAL_SUPPLY = 100000000 * ZEROES;
     uint256 internal _reflectedSupply = (MAX - (MAX % TOTAL_SUPPLY));
 
     /**
-     * Set the maximum buy to 2%.
+     * @dev Set the maximum transaction amount allowed in a transfer.
+     *
+     * The default value is 1% of the total supply.
      */
-    uint256 internal constant maxTransactionAmount = TOTAL_SUPPLY / 50;
+    uint256 internal constant maxTransactionAmount = TOTAL_SUPPLY / 100; // 1% of the total supply
 
     /**
-     * Set the maximum hold to 5%.
+     * @dev Set the maximum allowed balance in a wallet.
+     *
+     * The default value is 2% of the total supply.
      */
-    uint256 internal constant maxWalletBalance = TOTAL_SUPPLY / 20;
+    uint256 internal constant maxWalletBalance = TOTAL_SUPPLY / 50; // 2% of the total supply
 
     /**
-     * Set the number of tokens to swap and add to liquidity.
+     * @dev Set the number of tokens to swap and add to liquidity.
      *
-     * When the contract's balance reaches 0.1% of tokens, swap & liquify will be
-     * executed in the next transfer with function `_beforeTokenTransfer`
+     * Whenever the contract's balance reaches this number of tokens, swap & liquify will be
+     * executed in the very next transfer (via the `_beforeTokenTransfer`)
      *
-     * Once the contract's balance reaches `numberOfTokensToSwapToLiquidity`, `swapAndLiquify`
-     * of `Liquifier` will be executed. Half of the tokens will be swapped for BNB and together
-     * with the other half converted into a Token-BNB LP Token.
-     *
-     * See: `Liquifier`
+     * 1 of each transaction will be first sent to the contract address. Once the contract's balance
+     *  reaches `numberOfTokensToSwapToLiquidity` the `swapAndLiquify` of `Liquifier` will be executed.
+     *  Half of the tokens will be swapped for ETH (or BNB on BSC) and together with the other
+     *  half converted into a Token-ETH/Token-BNB LP Token.
      */
     uint256 internal constant numberOfTokensToSwapToLiquidity =
         TOTAL_SUPPLY / 1000; // 0.1% of the total supply
 
+    // --------------------- Fees Settings ------------------- //
+
     /**
-     * Contract specific address'
+     * @dev Wallets for feeType.External
      */
     address internal charityAddress =
-        0x13E1B9381f9942a76e13B56D69C6a5DB8e5DaD15;
-    address internal operatingAddress =
-        0x7286444DD26b990014C59a516fC05471d3ac9458;
+        0xF5972eE5678b435c6e1ff7EBD5982F2a3247A157;
+    address internal marketingAddress =
+        0xFe607FaD583BB771AA391613860DF274857B8fc8;
+
+    /**
+     * @dev Wallets for feeType.Burn
+     */
     address internal burnAddress = 0x000000000000000000000000000000000000dEaD;
 
-    enum FeeType {Antiwhale, Burn, Liquidity, Rfi, Project}
+    enum FeeType {Antiwhale, Burn, Liquidity, Rfi, External}
     struct Fee {
         FeeType name;
         uint256 value;
@@ -78,12 +89,16 @@ abstract contract Tokenomics {
     }
 
     function _addFees() private {
+        /**
+         * The value of fees is given in part per 1000 (based on the value of FEES_DIVISOR),
+         * e.g. for 5% use 50, for 3.5% use 35, etc.
+         */
         _addFee(FeeType.Rfi, 40, address(this));
 
         _addFee(FeeType.Burn, 10, burnAddress);
         _addFee(FeeType.Liquidity, 40, address(this));
-        _addFee(FeeType.Project, 30, charityAddress);
-        _addFee(FeeType.Project, 30, operatingAddress);
+        _addFee(FeeType.External, 30, charityAddress);
+        _addFee(FeeType.External, 30, marketingAddress);
     }
 
     function _getFeesCount() internal view returns (uint256) {
@@ -117,6 +132,7 @@ abstract contract Tokenomics {
         fee.total = fee.total.add(amount);
     }
 
+    // function getCollectedFeeTotal(uint256 index) external view returns (uint256){
     function getCollectedFeeTotal(uint256 index)
         internal
         view

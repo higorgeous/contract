@@ -12,7 +12,7 @@ import "../libraries/Address.sol";
 import "../libraries/SafeMath.sol";
 import "../utilities/Ownable.sol";
 
-abstract contract BaseRedistribution is
+abstract contract BaseRfiToken is
     IERC20,
     IERC20Metadata,
     Ownable,
@@ -44,7 +44,7 @@ abstract contract BaseRedistribution is
         emit Transfer(address(0), owner(), TOTAL_SUPPLY);
     }
 
-    /** Functions required by IERC20Metadata **/
+    /** Functions required by IERC20Metadat **/
     function name() external pure override returns (string memory) {
         return NAME;
     }
@@ -137,10 +137,6 @@ abstract contract BaseRedistribution is
         _burnTokens(sender, amount, reflectedAmount);
     }
 
-    /**
-     * Burns the specified amount of tokens by sending them
-     * to the burn address
-     */
     function _burnTokens(
         address sender,
         uint256 tBurn,
@@ -153,7 +149,7 @@ abstract contract BaseRedistribution is
             _balances[burnAddress] = _balances[burnAddress].add(tBurn);
 
         /**
-         * Emit the event so that the burn address balance is updated (on bscscan)
+         * @dev Emit the event so that the burn address balance is updated (on bscscan)
          */
         emit Transfer(sender, burnAddress, tBurn);
     }
@@ -196,7 +192,7 @@ abstract contract BaseRedistribution is
     }
 
     /**
-     * Calculates and returns the reflected amount for the given amount with or without
+     * @dev Calculates and returns the reflected amount for the given amount with or without
      * the transfer fees (deductTransferFee true/false)
      */
     function reflectionFromToken(uint256 tAmount, bool deductTransferFee)
@@ -216,7 +212,7 @@ abstract contract BaseRedistribution is
     }
 
     /**
-     * Calculates and returns the amount of tokens corresponding to the given reflected amount.
+     * @dev Calculates and returns the amount of tokens corresponding to the given reflected amount.
      */
     function tokenFromReflection(uint256 rAmount)
         internal
@@ -289,7 +285,7 @@ abstract contract BaseRedistribution is
     }
 
     function _isUnlimitedSender(address account) internal view returns (bool) {
-        // the owner should be the only whitelisted sender until ownership is renounced
+        // the owner should be the only whitelisted sender
         return (account == owner());
     }
 
@@ -298,7 +294,8 @@ abstract contract BaseRedistribution is
         view
         returns (bool)
     {
-        // The owner is the only whitelisted recipient until ownership is renounced
+        // the owner should be a white-listed recipient
+        // and anyone should be able to burn tokens
         return (account == owner() || account == burnAddress);
     }
 
@@ -309,15 +306,15 @@ abstract contract BaseRedistribution is
     ) private {
         require(
             sender != address(0),
-            "BaseRedistribution: transfer from the zero address"
+            "BaseRfiToken: transfer from the zero address"
         );
         require(
             recipient != address(0),
-            "BaseRedistribution: transfer to the zero address"
+            "BaseRfiToken: transfer to the zero address"
         );
         require(
             sender != address(burnAddress),
-            "BaseRedistribution: transfer from the burn address"
+            "BaseRfiToken: transfer from the burn address"
         );
         require(amount > 0, "Transfer amount must be greater than zero");
 
@@ -343,6 +340,9 @@ abstract contract BaseRedistribution is
              * selling tokens is sending them back to the pair (without this
              * check, selling tokens would not work if the pair's balance
              * was over the allowed max)
+             *
+             * Note: This does NOT take into account the fees which will be deducted
+             *       from the amount. As such it could be a bit confusing
              */
             if (
                 maxWalletBalance > 0 &&
@@ -358,7 +358,7 @@ abstract contract BaseRedistribution is
             }
         }
 
-        // If any account belongs to _isExcludedFromFee account then remove the fee
+        // if any account belongs to _isExcludedFromFee account then remove the fee
         if (_isExcludedFromFee[sender] || _isExcludedFromFee[recipient]) {
             takeFee = false;
         }
@@ -390,6 +390,7 @@ abstract contract BaseRedistribution is
          * Sender's and Recipient's reflected balances must be always updated regardless of
          * whether they are excluded from rewards or not.
          */
+
         _reflectedBalances[sender] = _reflectedBalances[sender].sub(rAmount);
         _reflectedBalances[recipient] = _reflectedBalances[recipient].add(
             rTransferAmount
@@ -398,6 +399,7 @@ abstract contract BaseRedistribution is
         /**
          * Update the true/nominal balances for excluded accounts
          */
+
         if (_isExcludedFromRewards[sender]) {
             _balances[sender] = _balances[sender].sub(tAmount);
         }
@@ -406,7 +408,7 @@ abstract contract BaseRedistribution is
         }
 
         _takeFees(amount, currentRate, sumOfFees);
-        emit Transfer(sender, operatingAddress, tTransferAmount);
+        emit Transfer(sender, recipient, tTransferAmount);
     }
 
     function _takeFees(
@@ -454,6 +456,13 @@ abstract contract BaseRedistribution is
     function _getCurrentSupply() internal view returns (uint256, uint256) {
         uint256 rSupply = _reflectedSupply;
         uint256 tSupply = TOTAL_SUPPLY;
+
+        /**
+         * The code below removes balances of addresses excluded from rewards from
+         * rSupply and tSupply, which effectively increases the % of transaction fees
+         * delivered to non-excluded holders
+         */
+
         for (uint256 i = 0; i < _excluded.length; i++) {
             if (
                 _reflectedBalances[_excluded[i]] > rSupply ||
@@ -468,7 +477,7 @@ abstract contract BaseRedistribution is
     }
 
     /**
-     * Hook that is called before any transfer of tokens.
+     * @dev Hook that is called before any transfer of tokens.
      */
     function _beforeTokenTransfer(
         address sender,
@@ -478,7 +487,7 @@ abstract contract BaseRedistribution is
     ) internal virtual;
 
     /**
-     * Returns the total sum of fees to be processed in each transaction.
+     * @dev Returns the total sum of fees to be processed in each transaction.
      */
 
     function _getSumOfFees(address sender, uint256 amount)
@@ -488,12 +497,16 @@ abstract contract BaseRedistribution is
         returns (uint256);
 
     /**
-     * A delegate which should return true if the given address is the V2 Pair and false otherwise
+     * @dev A delegate which should return true if the given address is the V2 Pair and false otherwise
      */
     function _isV2Pair(address account) internal view virtual returns (bool);
 
     /**
-     * Redistributes the specified amount among the current holders
+     * @dev Redistributes the specified amount among the current holders via the reflect.finance
+     * algorithm, i.e. by updating the _reflectedSupply (_rSupply) which ultimately adjusts the
+     * current rate used by `tokenFromReflection` and, in turn, the value returns from `balanceOf`.
+     * This is the bit of clever math which allows rfi to redistribute the fee without
+     * having to iterate through all holders.
      */
     function _redistribute(
         uint256 amount,
@@ -509,7 +522,7 @@ abstract contract BaseRedistribution is
     }
 
     /**
-     * Hook that is called before the `Transfer` event is emitted if fees are enabled for the transfer
+     * @dev Hook that is called before the `Transfer` event is emitted if fees are enabled for the transfer
      */
     function _takeTransactionFees(uint256 amount, uint256 currentRate)
         internal

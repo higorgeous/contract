@@ -21,17 +21,17 @@
 
 pragma solidity ^0.8.4;
 
-import "./Antiwhale.sol";
-import "./BaseRedistribution.sol";
+import "./BaseRfiToken.sol";
 import "./Liquifier.sol";
+import "./Antiwhale.sol";
 import "../libraries/SafeMath.sol";
 
 // import "https://github.com/higorgeous/contract/blob/master/contracts/Antiwhale.sol";
-// import "https://github.com/higorgeous/contract/blob/master/contracts/BaseRedistribution.sol";
+// import "https://github.com/higorgeous/contract/blob/master/contracts/BaseRfiToken.sol";
 // import "https://github.com/higorgeous/contract/blob/master/contracts/Liquifier.sol";
 // import "https://github.com/higorgeous/contract/blob/master/libraries/SafeMath.sol";
 
-abstract contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
+abstract contract GorgeousToken is BaseRfiToken, Liquifier, Antiwhale {
     using SafeMath for uint256;
 
     constructor(Env _env) {
@@ -42,7 +42,7 @@ abstract contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
         );
 
         // exclude the pair address from rewards - we don't want to redistribute
-        // tokenomics to these two; redistribution is only for holders!
+        // tx fees to these two; redistribution is only for holders.
         _exclude(_pair);
         _exclude(burnAddress);
     }
@@ -60,7 +60,6 @@ abstract contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
         return _getAntiwhaleFees(balanceOf(sender), amount);
     }
 
-    // function _beforeTokenTransfer(address sender, address recipient, uint256 amount, bool takeFee) internal override {
     function _beforeTokenTransfer(
         address sender,
         address,
@@ -125,6 +124,7 @@ abstract contract GorgeousToken is BaseRedistribution, Liquifier, Antiwhale {
         );
         if (_isExcludedFromRewards[recipient])
             _balances[recipient] = _balances[recipient].add(tAmount);
+
         _addFeeCollectedAmount(index, tAmount);
     }
 

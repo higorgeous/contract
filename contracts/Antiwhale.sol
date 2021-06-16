@@ -6,7 +6,7 @@ import "./Tokenomics.sol";
 
 abstract contract Antiwhale is Tokenomics {
     /**
-     * Returns the total sum of tokenomics (in percents / per-mille)
+     * @dev Returns the total sum of fees (in percents / per-mille - this depends on the FEES_DIVISOR value)
      */
     function _getAntiwhaleFees(uint256, uint256)
         internal
