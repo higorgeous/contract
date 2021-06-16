@@ -9,6 +9,7 @@ import "../interfaces/IERC20Metadata.sol";
 import "../interfaces/IPancakeV2Factory.sol";
 import "../interfaces/IPancakeV2Router.sol";
 import "../libraries/Address.sol";
+import "../libraries/SafeMath.sol";
 import "../utilities/Ownable.sol";
 
 abstract contract BaseRedistribution is
@@ -18,22 +19,23 @@ abstract contract BaseRedistribution is
     Presaleable,
     Tokenomics
 {
+    using SafeMath for uint256;
     using Address for address;
 
     mapping(address => uint256) internal _reflectedBalances;
     mapping(address => uint256) internal _balances;
     mapping(address => mapping(address => uint256)) internal _allowances;
 
-    mapping(address => bool) internal _isExcludedFromTokenomics;
+    mapping(address => bool) internal _isExcludedFromFee;
     mapping(address => bool) internal _isExcludedFromRewards;
     address[] private _excluded;
 
     constructor() {
         _reflectedBalances[owner()] = _reflectedSupply;
 
-        // exclude owner and this contract from tokenomics
-        _isExcludedFromTokenomics[owner()] = true;
-        _isExcludedFromTokenomics[address(this)] = true;
+        // exclude owner and this contract from fee
+        _isExcludedFromFee[owner()] = true;
+        _isExcludedFromFee[address(this)] = true;
 
         // exclude the owner and this contract from rewards
         _exclude(owner());
@@ -42,7 +44,7 @@ abstract contract BaseRedistribution is
         emit Transfer(address(0), owner(), TOTAL_SUPPLY);
     }
 
-    /** Functions required by IERC20Metadat **/
+    /** Functions required by IERC20Metadata **/
     function name() external pure override returns (string memory) {
         return NAME;
     }
@@ -101,7 +103,10 @@ abstract contract BaseRedistribution is
         _approve(
             sender,
             _msgSender(),
-            _allowances[sender][_msgSender()] - amount
+            _allowances[sender][_msgSender()].sub(
+                amount,
+                "ERC20: transfer amount exceeds allowance"
+            )
         );
         return true;
     }
@@ -110,44 +115,45 @@ abstract contract BaseRedistribution is
         address sender = _msgSender();
         require(
             sender != address(0),
-            "BaseRedistribution: burn from the zero address"
+            "BaseRfiToken: burn from the zero address"
         );
         require(
             sender != address(burnAddress),
-            "BaseRedistribution: burn from the burn address"
+            "BaseRfiToken: burn from the burn address"
         );
 
         uint256 balance = balanceOf(sender);
-        require(
-            balance >= amount,
-            "BaseRedistribution: burn amount exceeds balance"
-        );
+        require(balance >= amount, "BaseRfiToken: burn amount exceeds balance");
 
-        uint256 reflectedAmount = amount * _getCurrentRate();
+        uint256 reflectedAmount = amount.mul(_getCurrentRate());
 
         // remove the amount from the sender's balance first
-        _reflectedBalances[sender] =
-            _reflectedBalances[sender] -
-            reflectedAmount;
+        _reflectedBalances[sender] = _reflectedBalances[sender].sub(
+            reflectedAmount
+        );
         if (_isExcludedFromRewards[sender])
-            _balances[sender] = _balances[sender] - amount;
+            _balances[sender] = _balances[sender].sub(amount);
 
         _burnTokens(sender, amount, reflectedAmount);
     }
 
+    /**
+     * Burns the specified amount of tokens by sending them
+     * to the burn address
+     */
     function _burnTokens(
         address sender,
         uint256 tBurn,
         uint256 rBurn
     ) internal {
-        _reflectedBalances[burnAddress] =
-            _reflectedBalances[burnAddress] +
-            rBurn;
+        _reflectedBalances[burnAddress] = _reflectedBalances[burnAddress].add(
+            rBurn
+        );
         if (_isExcludedFromRewards[burnAddress])
-            _balances[burnAddress] = _balances[burnAddress] + tBurn;
+            _balances[burnAddress] = _balances[burnAddress].add(tBurn);
 
         /**
-         * Emit the event so that the burn address balance is updated on bscscan
+         * Emit the event so that the burn address balance is updated (on bscscan)
          */
         emit Transfer(sender, burnAddress, tBurn);
     }
@@ -160,7 +166,7 @@ abstract contract BaseRedistribution is
         _approve(
             _msgSender(),
             spender,
-            _allowances[_msgSender()][spender] + addedValue
+            _allowances[_msgSender()][spender].add(addedValue)
         );
         return true;
     }
@@ -173,7 +179,10 @@ abstract contract BaseRedistribution is
         _approve(
             _msgSender(),
             spender,
-            _allowances[_msgSender()][spender] - subtractedValue
+            _allowances[_msgSender()][spender].sub(
+                subtractedValue,
+                "ERC20: decreased allowance below zero"
+            )
         );
         return true;
     }
@@ -188,20 +197,20 @@ abstract contract BaseRedistribution is
 
     /**
      * Calculates and returns the reflected amount for the given amount with or without
-     * the transfer tokenomics (`deductTransferTokenomics` true/false)
+     * the transfer fees (deductTransferFee true/false)
      */
-    function reflectionFromToken(uint256 tAmount, bool deductTransferTokenomics)
+    function reflectionFromToken(uint256 tAmount, bool deductTransferFee)
         external
         view
         returns (uint256)
     {
         require(tAmount <= TOTAL_SUPPLY, "Amount must be less than supply");
-        if (!deductTransferTokenomics) {
+        if (!deductTransferFee) {
             (uint256 rAmount, , , , ) = _getValues(tAmount, 0);
             return rAmount;
         } else {
             (, uint256 rTransferAmount, , , ) =
-                _getValues(tAmount, _getSumOfTokenomics(_msgSender(), tAmount));
+                _getValues(tAmount, _getSumOfFees(_msgSender(), tAmount));
             return rTransferAmount;
         }
     }
@@ -219,7 +228,7 @@ abstract contract BaseRedistribution is
             "Amount must be less than total reflections"
         );
         uint256 currentRate = _getCurrentRate();
-        return rAmount / currentRate;
+        return rAmount.div(currentRate);
     }
 
     function excludeFromReward(address account) external onlyOwner() {
@@ -250,19 +259,15 @@ abstract contract BaseRedistribution is
         }
     }
 
-    function setExcludedFromTokenomics(address account, bool value)
+    function setExcludedFromFee(address account, bool value)
         external
         onlyOwner
     {
-        _isExcludedFromTokenomics[account] = value;
+        _isExcludedFromFee[account] = value;
     }
 
-    function isExcludedFromTokenomics(address account)
-        public
-        view
-        returns (bool)
-    {
-        return _isExcludedFromTokenomics[account];
+    function isExcludedFromFee(address account) public view returns (bool) {
+        return _isExcludedFromFee[account];
     }
 
     function _approve(
@@ -272,11 +277,11 @@ abstract contract BaseRedistribution is
     ) internal {
         require(
             owner != address(0),
-            "BaseRedistribution: approve from the zero address"
+            "BaseRfiToken: approve from the zero address"
         );
         require(
             spender != address(0),
-            "BaseRedistribution: approve to the zero address"
+            "BaseRfiToken: approve to the zero address"
         );
 
         _allowances[owner][spender] = amount;
@@ -284,7 +289,7 @@ abstract contract BaseRedistribution is
     }
 
     function _isUnlimitedSender(address account) internal view returns (bool) {
-        // The owner is the only whitelisted sender until ownership is renounced
+        // the owner should be the only whitelisted sender until ownership is renounced
         return (account == owner());
     }
 
@@ -316,14 +321,15 @@ abstract contract BaseRedistribution is
         );
         require(amount > 0, "Transfer amount must be greater than zero");
 
-        // Indicates whether or not tokenomics should be applied for the transfer
-        bool takeTokenomics = true;
+        // indicates whether or not feee should be deducted from the transfer
+        bool takeFee = true;
 
         if (isInPresale) {
-            takeTokenomics = false;
+            takeFee = false;
         } else {
             /**
-             * Check the amount is within the max allowed limit
+             * Check the amount is within the max allowed limit as long as a
+             * unlimited sender/recepient is not involved in the transaction
              */
             if (
                 amount > maxTransactionAmount &&
@@ -334,7 +340,9 @@ abstract contract BaseRedistribution is
             }
             /**
              * The pair needs to excluded from the max wallet balance check;
-             * selling tokens is sending them back to the pair
+             * selling tokens is sending them back to the pair (without this
+             * check, selling tokens would not work if the pair's balance
+             * was over the allowed max)
              */
             if (
                 maxWalletBalance > 0 &&
@@ -350,27 +358,24 @@ abstract contract BaseRedistribution is
             }
         }
 
-        // Remove accounts that belong to _isExcludedFromTokenomics
-        if (
-            _isExcludedFromTokenomics[sender] ||
-            _isExcludedFromTokenomics[recipient]
-        ) {
-            takeTokenomics = false;
+        // If any account belongs to _isExcludedFromFee account then remove the fee
+        if (_isExcludedFromFee[sender] || _isExcludedFromFee[recipient]) {
+            takeFee = false;
         }
 
-        _beforeTokenTransfer(sender, recipient, amount, takeTokenomics);
-        _transferTokens(sender, recipient, amount, takeTokenomics);
+        _beforeTokenTransfer(sender, recipient, amount, takeFee);
+        _transferTokens(sender, recipient, amount, takeFee);
     }
 
     function _transferTokens(
         address sender,
         address recipient,
         uint256 amount,
-        bool takeTokenomics
+        bool takeFee
     ) private {
-        uint256 sumOfTokenomics = _getSumOfTokenomics(sender, amount);
-        if (!takeTokenomics) {
-            sumOfTokenomics = 0;
+        uint256 sumOfFees = _getSumOfFees(sender, amount);
+        if (!takeFee) {
+            sumOfFees = 0;
         }
 
         (
@@ -379,44 +384,42 @@ abstract contract BaseRedistribution is
             uint256 tAmount,
             uint256 tTransferAmount,
             uint256 currentRate
-        ) = _getValues(amount, sumOfTokenomics);
+        ) = _getValues(amount, sumOfFees);
 
         /**
          * Sender's and Recipient's reflected balances must be always updated regardless of
          * whether they are excluded from rewards or not.
          */
-
-        _reflectedBalances[sender] = _reflectedBalances[sender] - rAmount;
-        _reflectedBalances[recipient] =
-            _reflectedBalances[recipient] +
-            rTransferAmount;
+        _reflectedBalances[sender] = _reflectedBalances[sender].sub(rAmount);
+        _reflectedBalances[recipient] = _reflectedBalances[recipient].add(
+            rTransferAmount
+        );
 
         /**
          * Update the true/nominal balances for excluded accounts
          */
-
         if (_isExcludedFromRewards[sender]) {
-            _balances[sender] = _balances[sender] - tAmount;
+            _balances[sender] = _balances[sender].sub(tAmount);
         }
         if (_isExcludedFromRewards[recipient]) {
-            _balances[recipient] = _balances[recipient] + tTransferAmount;
+            _balances[recipient] = _balances[recipient].add(tTransferAmount);
         }
 
-        _takeTokenomics(amount, currentRate, sumOfTokenomics);
+        _takeFees(amount, currentRate, sumOfFees);
         emit Transfer(sender, recipient, tTransferAmount);
     }
 
-    function _takeTokenomics(
+    function _takeFees(
         uint256 amount,
         uint256 currentRate,
-        uint256 sumOfTokenomics
+        uint256 sumOfFees
     ) private {
-        if (sumOfTokenomics > 0 && !isInPresale) {
-            _takeTransactionTokenomics(amount, currentRate);
+        if (sumOfFees > 0 && !isInPresale) {
+            _takeTransactionFees(amount, currentRate);
         }
     }
 
-    function _getValues(uint256 tAmount, uint256 tokenomicsSum)
+    function _getValues(uint256 tAmount, uint256 feesSum)
         internal
         view
         returns (
@@ -427,12 +430,12 @@ abstract contract BaseRedistribution is
             uint256
         )
     {
-        uint256 tTotalTokenomics = (tAmount * tokenomicsSum) / TOKENOMICS_DIVISOR;
-        uint256 tTransferAmount = tAmount - tTotalTokenomics;
+        uint256 tTotalFees = tAmount.mul(feesSum).div(FEES_DIVISOR);
+        uint256 tTransferAmount = tAmount.sub(tTotalFees);
         uint256 currentRate = _getCurrentRate();
-        uint256 rAmount = tAmount * currentRate;
-        uint256 rTotalTokenomics = tTotalTokenomics * currentRate;
-        uint256 rTransferAmount = rAmount - rTotalTokenomics;
+        uint256 rAmount = tAmount.mul(currentRate);
+        uint256 rTotalFees = tTotalFees.mul(currentRate);
+        uint256 rTransferAmount = rAmount.sub(rTotalFees);
 
         return (
             rAmount,
@@ -445,28 +448,21 @@ abstract contract BaseRedistribution is
 
     function _getCurrentRate() internal view returns (uint256) {
         (uint256 rSupply, uint256 tSupply) = _getCurrentSupply();
-        return rSupply / tSupply;
+        return rSupply.div(tSupply);
     }
 
     function _getCurrentSupply() internal view returns (uint256, uint256) {
         uint256 rSupply = _reflectedSupply;
         uint256 tSupply = TOTAL_SUPPLY;
-
-        /**
-         * The code below removes balances of addresses excluded from rewards from
-         * rSupply and tSupply, which effectively increases the % of transaction tokenomics
-         * delivered to non-excluded holders
-         */
-
         for (uint256 i = 0; i < _excluded.length; i++) {
             if (
                 _reflectedBalances[_excluded[i]] > rSupply ||
                 _balances[_excluded[i]] > tSupply
             ) return (_reflectedSupply, TOTAL_SUPPLY);
-            rSupply = rSupply - _reflectedBalances[_excluded[i]];
-            tSupply = tSupply - _balances[_excluded[i]];
+            rSupply = rSupply.sub(_reflectedBalances[_excluded[i]]);
+            tSupply = tSupply.sub(_balances[_excluded[i]]);
         }
-        if (tSupply == 0 || rSupply < _reflectedSupply / TOTAL_SUPPLY)
+        if (tSupply == 0 || rSupply < _reflectedSupply.div(TOTAL_SUPPLY))
             return (_reflectedSupply, TOTAL_SUPPLY);
         return (rSupply, tSupply);
     }
@@ -478,14 +474,14 @@ abstract contract BaseRedistribution is
         address sender,
         address recipient,
         uint256 amount,
-        bool takeTokenomics
+        bool takeFee
     ) internal virtual;
 
     /**
-     * Returns the total sum of tokenomics to be processed in each transaction.
+     * Returns the total sum of fees to be processed in each transaction.
      */
 
-    function _getSumOfTokenomics(address sender, uint256 amount)
+    function _getSumOfFees(address sender, uint256 amount)
         internal
         view
         virtual
@@ -502,20 +498,20 @@ abstract contract BaseRedistribution is
     function _redistribute(
         uint256 amount,
         uint256 currentRate,
-        uint256 tokenomic,
+        uint256 fee,
         uint256 index
     ) internal {
-        uint256 tTokenomic = (amount * tokenomic) / TOKENOMICS_DIVISOR;
-        uint256 rTokenomic = tTokenomic * currentRate;
+        uint256 tFee = amount.mul(fee).div(FEES_DIVISOR);
+        uint256 rFee = tFee.mul(currentRate);
 
-        _reflectedSupply = _reflectedSupply - rTokenomic;
-        _addTokenomicCollectedAmount(index, tTokenomic);
+        _reflectedSupply = _reflectedSupply.sub(rFee);
+        _addFeeCollectedAmount(index, tFee);
     }
 
     /**
-     * Hook that is called before the `Transfer` event is emitted if tokenomics are enabled for the transfer
+     * Hook that is called before the `Transfer` event is emitted if fees are enabled for the transfer
      */
-    function _takeTransactionTokenomics(uint256 amount, uint256 currentRate)
+    function _takeTransactionFees(uint256 amount, uint256 currentRate)
         internal
         virtual;
 }

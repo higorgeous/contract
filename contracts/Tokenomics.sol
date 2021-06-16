@@ -3,8 +3,11 @@
 pragma solidity ^0.8.5;
 
 import "./Presaleable.sol";
+import "../libraries/SafeMath.sol"
 
 abstract contract Tokenomics {
+    using SafeMath for uint256;
+
     string internal constant NAME = "Gorgeous Token";
     string internal constant SYMBOL = "GORGEOUS";
 
@@ -50,92 +53,52 @@ abstract contract Tokenomics {
         0x5DDB6ABD2e3A1f23f15a77227d9652c94341AA57;
     address internal burnAddress = 0x000000000000000000000000000000000000dEaD;
 
-    enum TokenomicType {
-        Burn,
-        Liquidity,
-        Redistribution,
-        Project
-    }
-    struct Tokenomic {
-        TokenomicType name;
+    enum FeeType { Antiwhale, Burn, Liquidity, Rfi, External, ExternalToETH }
+    struct Fee {
+        FeeType name;
         uint256 value;
         address recipient;
         uint256 total;
     }
 
-    Tokenomic[] internal tokenomics;
-    uint256 internal sumOfTokenomics;
+    Fee[] internal fees;
+    uint256 internal sumOfFees;
 
     constructor() {
-        _addTokenomics();
+        _addFees();
     }
 
-    function _addTokenomic(
-        TokenomicType name,
-        uint256 value,
-        address recipient
-    ) private {
-        tokenomics.push(Tokenomic(name, value, recipient, 0));
-        sumOfTokenomics += value;
+    function _addFee(FeeType name, uint256 value, address recipient) private {
+        fees.push( Fee(name, value, recipient, 0 ) );
+        sumOfFees += value;
     }
 
-    function _addTokenomics() private {
-        _addTokenomic(TokenomicType.Redistribution, 40, address(this));
+    function _addFees() private {
+        _addFee(FeeType.Rfi, 40, address(this) ); 
 
-        _addTokenomic(TokenomicType.Burn, 10, burnAddress);
-        _addTokenomic(TokenomicType.Liquidity, 40, address(this));
-        _addTokenomic(TokenomicType.Project, 30, charityAddress);
-        _addTokenomic(TokenomicType.Project, 30, operatingAddress);
+        _addFee(FeeType.Burn, 10, burnAddress );
+        _addFee(FeeType.Liquidity, 40, address(this) );
+        _addFee(FeeType.External, 30, charityAddress );
+        _addFee(FeeType.External, 30, operatingAddress );
     }
 
-    function _getTokenomicsCount() internal view returns (uint256) {
-        return tokenomics.length;
+    function _getFeesCount() internal view returns (uint256){ return fees.length; }
+
+    function _getFeeStruct(uint256 index) private view returns(Fee storage){
+        require( index >= 0 && index < fees.length, "FeesSettings._getFeeStruct: Fee index out of bounds");
+        return fees[index];
+    }
+    function _getFee(uint256 index) internal view returns (FeeType, uint256, address, uint256){
+        Fee memory fee = _getFeeStruct(index);
+        return ( fee.name, fee.value, fee.recipient, fee.total );
+    }
+    function _addFeeCollectedAmount(uint256 index, uint256 amount) internal {
+        Fee storage fee = _getFeeStruct(index);
+        fee.total = fee.total.add(amount);
     }
 
-    function _getTokenomicStruct(uint256 index)
-        private
-        view
-        returns (Tokenomic storage)
-    {
-        require(
-            index >= 0 && index < tokenomics.length,
-            "TokenomicSettings._getTokenomicStruct: Tokenomic index out of bounds"
-        );
-        return tokenomics[index];
-    }
-
-    function _getTokenomic(uint256 index)
-        internal
-        view
-        returns (
-            TokenomicType,
-            uint256,
-            address,
-            uint256
-        )
-    {
-        Tokenomic memory tokenomic = _getTokenomicStruct(index);
-        return (
-            tokenomic.name,
-            tokenomic.value,
-            tokenomic.recipient,
-            tokenomic.total
-        );
-    }
-
-    function _addTokenomicCollectedAmount(uint256 index, uint256 amount)
-        internal
-    {
-        Tokenomic storage tokenomic = _getTokenomicStruct(index);
-        tokenomic.total = tokenomic.total + amount;
-    }
-
-    function getCollectedTokenomicTotal(uint256 index)
-        internal
-        view
-        returns (uint256)
-    {
-        Tokenomic memory tokenomic = _getTokenomicStruct(index);
-        return tokenomic.total;
+    function getCollectedFeeTotal(uint256 index) internal view returns (uint256){
+        Fee memory fee = _getFeeStruct(index);
+        return fee.total;
     }
 }
