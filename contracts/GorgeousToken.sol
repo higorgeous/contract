@@ -19,7 +19,7 @@
 // Redistribution fee: 15% burn (1% Burn, 4% Back to the Liquidity Pool, 3% To charity wallet, 3% To operating wallet, 4% Redistributed to Holders)
 // ----------------------------------------------------------------------------
 
-pragma solidity ^0.8.5;
+pragma solidity ^0.8.4;
 
 import "./Antiwhale.sol";
 import "./BaseRedistribution.sol";
