@@ -9,11 +9,11 @@
 // Symbol: GORGEOUS
 // Name: Gorgeous
 // Total supply: 100,000,000.000000000000000000
-// Decimals: 9
+// Decimals: 6
 // ----------------------------------------------------------------------------
 // Max buy 2% max, hold 5%
-// 50% Burnt to dead wallet
-// 40% Liquidity in pool
+// 20% Burnt to dead wallet
+// 60% Liquidity & Pre-sale on DxSale
 // Ownership renounced
 // ----------------------------------------------------------------------------
 // Redistribution fee: 15% burn (1% Burn, 4% Back to the Liquidity Pool, 3% To charity wallet, 3% To operating wallet, 4% Redistributed to Holders)

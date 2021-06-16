@@ -14,7 +14,7 @@ abstract contract Tokenomics {
     string internal constant SYMBOL = "GORGEOUS";
 
     uint16 internal constant FEES_DIVISOR = 10**3;
-    uint8 internal constant DECIMALS = 6;
+    uint8 internal constant DECIMALS = 9;
     uint256 internal constant ZEROES = 10**DECIMALS;
 
     uint256 private constant MAX = ~uint256(0);
