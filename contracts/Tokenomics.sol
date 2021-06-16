@@ -3,7 +3,7 @@
 pragma solidity ^0.8.5;
 
 import "./Presaleable.sol";
-import "../libraries/SafeMath.sol"
+import "../libraries/SafeMath.sol";
 
 abstract contract Tokenomics {
     using SafeMath for uint256;
@@ -11,7 +11,7 @@ abstract contract Tokenomics {
     string internal constant NAME = "Gorgeous Token";
     string internal constant SYMBOL = "GORGEOUS";
 
-    uint16 internal constant TOKENOMICS_DIVISOR = 10**3;
+    uint16 internal constant FEES_DIVISOR = 10**3;
     uint8 internal constant DECIMALS = 9;
     uint256 internal constant ZEROES = 10**DECIMALS;
 
@@ -53,7 +53,7 @@ abstract contract Tokenomics {
         0x5DDB6ABD2e3A1f23f15a77227d9652c94341AA57;
     address internal burnAddress = 0x000000000000000000000000000000000000dEaD;
 
-    enum FeeType { Antiwhale, Burn, Liquidity, Rfi, External, ExternalToETH }
+    enum FeeType {Antiwhale, Burn, Liquidity, Rfi, External, ExternalToETH}
     struct Fee {
         FeeType name;
         uint256 value;
@@ -68,36 +68,60 @@ abstract contract Tokenomics {
         _addFees();
     }
 
-    function _addFee(FeeType name, uint256 value, address recipient) private {
-        fees.push( Fee(name, value, recipient, 0 ) );
+    function _addFee(
+        FeeType name,
+        uint256 value,
+        address recipient
+    ) private {
+        fees.push(Fee(name, value, recipient, 0));
         sumOfFees += value;
     }
 
     function _addFees() private {
-        _addFee(FeeType.Rfi, 40, address(this) ); 
+        _addFee(FeeType.Rfi, 40, address(this));
 
-        _addFee(FeeType.Burn, 10, burnAddress );
-        _addFee(FeeType.Liquidity, 40, address(this) );
-        _addFee(FeeType.External, 30, charityAddress );
-        _addFee(FeeType.External, 30, operatingAddress );
+        _addFee(FeeType.Burn, 10, burnAddress);
+        _addFee(FeeType.Liquidity, 40, address(this));
+        _addFee(FeeType.External, 30, charityAddress);
+        _addFee(FeeType.External, 30, operatingAddress);
     }
 
-    function _getFeesCount() internal view returns (uint256){ return fees.length; }
+    function _getFeesCount() internal view returns (uint256) {
+        return fees.length;
+    }
 
-    function _getFeeStruct(uint256 index) private view returns(Fee storage){
-        require( index >= 0 && index < fees.length, "FeesSettings._getFeeStruct: Fee index out of bounds");
+    function _getFeeStruct(uint256 index) private view returns (Fee storage) {
+        require(
+            index >= 0 && index < fees.length,
+            "FeesSettings._getFeeStruct: Fee index out of bounds"
+        );
         return fees[index];
     }
-    function _getFee(uint256 index) internal view returns (FeeType, uint256, address, uint256){
+
+    function _getFee(uint256 index)
+        internal
+        view
+        returns (
+            FeeType,
+            uint256,
+            address,
+            uint256
+        )
+    {
         Fee memory fee = _getFeeStruct(index);
-        return ( fee.name, fee.value, fee.recipient, fee.total );
+        return (fee.name, fee.value, fee.recipient, fee.total);
     }
+
     function _addFeeCollectedAmount(uint256 index, uint256 amount) internal {
         Fee storage fee = _getFeeStruct(index);
         fee.total = fee.total.add(amount);
     }
 
-    function getCollectedFeeTotal(uint256 index) internal view returns (uint256){
+    function getCollectedFeeTotal(uint256 index)
+        internal
+        view
+        returns (uint256)
+    {
         Fee memory fee = _getFeeStruct(index);
         return fee.total;
     }
