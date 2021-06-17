@@ -51,9 +51,9 @@ abstract contract Tokenomics {
      * @dev Wallets for feeType.External
      */
     address internal charityAddress =
-        0xF5972eE5678b435c6e1ff7EBD5982F2a3247A157;
+        0xe2377D5b852CE0B8995C31B201699C31D8566A0b;
     address internal marketingAddress =
-        0xFe607FaD583BB771AA391613860DF274857B8fc8;
+        0x559acE6C43266065D0C5eBe7cf18c33e648AAA6E;
 
     /**
      * @dev Wallets for feeType.Burn
