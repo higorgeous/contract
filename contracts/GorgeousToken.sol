@@ -9,9 +9,9 @@
 // Symbol: GORGEOUS
 // Name: Gorgeous
 // Total supply: 100,000,000.000000000000000000
-// Decimals: 6
+// Decimals: 9
 // ----------------------------------------------------------------------------
-// Max buy 2% max, hold 5%
+// Max buy 1% max, hold 4%
 // 20% Burnt to dead wallet
 // 70% Liquidity & Pre-sale on DxSale
 // Ownership renounced
